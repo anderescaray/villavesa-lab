@@ -1,0 +1,10 @@
+.git
+.venv
+**/node_modules
+**/__pycache__
+data/raw/*
+!data/raw/gtfs_tuc_pamplona.zip
+data/cache
+validation
+docs
+web
