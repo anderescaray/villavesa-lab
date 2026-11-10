@@ -56,3 +56,13 @@ Each entry: context → options → choice → why.
 - **Why**: single-departure times are noisy for low-frequency lines (phase
   artefacts) and would make headway changes look erratic; sampling a window is
   what R5 and most accessibility tools do, which also makes validation fair.
+
+## D-007 Checkpoint commits of in-progress work
+
+- **Context**: the build container is ephemeral and several workstreams run in
+  parallel in one working tree on one branch.
+- **Choice**: in-progress work is pushed to the session branch as `wip:` checkpoint
+  commits so nothing is lost; a milestone PR is opened only when its part is
+  complete and green, and is squash-merged, so `main` history stays one commit
+  per milestone. The branch is never force-pushed: after a squash merge, `main`
+  is merged back into the branch instead.
