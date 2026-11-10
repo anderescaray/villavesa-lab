@@ -48,7 +48,10 @@ A web app (`docker compose up` → http://localhost:3000) with:
 5. **Scenario comparison** (before/after) + exportable report (PDF/HTML) for a
    planner or journalist.
 
-UI language: Spanish. Code, docs and README: English.
+Language: everything in the repo is English — code, comments, commit messages,
+PR titles/descriptions, docs, README. The UI is bilingual with an i18n toggle:
+Spanish by default (local users), English one click away (international
+reviewers); Basque (euskera) as a bonus if time allows.
 
 ## Design direction (important)
 
