@@ -93,3 +93,20 @@ Each entry: context → options → choice → why.
 - **Why**: these are sourced figures (`docs/reference_facts.md`), not guesses.
   Caveat: they belong to the pre-2024 concession; the new contract's unit prices
   are not public.
+
+## D-010 Router semantics (detail in `docs/router.md`)
+
+- **Two labels per round and stop**: T (arrival by a ride — the only labels that
+  may start a footpath) and A (best arrival — the only labels used for boarding).
+  Keeps single-hop footpaths exact without a transitively closed transfer table.
+- **Board slack**: 60 s on every boarding, including the first.
+- **Matrix averaging is a censored mean**: an unreachable departure sample counts
+  as the cap (2 h) and an OD pair is reachable only if at least half of its
+  samples are. "Mean of reachable samples" was rejected because it is not
+  monotone: cutting service could *lower* the reported time.
+- **Overnight trips** of the previous service day that run past 24:00 are added
+  to each date's timetable shifted by -24 h.
+- **FIFO**: overtaking trips are split into sub-patterns, as RAPTOR requires;
+  `PatternInfo.key` is the stable handle, not the pattern index.
+- **No range-RAPTOR**: plain RAPTOR x K departures computes the full 1,794-zone
+  matrix in ~0.4 s, well inside the "recompute in seconds" budget.
