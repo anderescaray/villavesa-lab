@@ -157,3 +157,32 @@ def vehicles_in_service(tt: Timetable, times: npt.ArrayLike) -> npt.NDArray[np.i
     return (np.searchsorted(s, t, side="right") - np.searchsorted(e, t, side="right")).astype(
         np.int64
     )
+
+
+def mean_headways(tt: Timetable, route: int | str) -> dict[str, float | None]:
+    """Mean headways (s) of a route in its busiest direction: ``peak`` (07-09 h),
+    ``offpeak`` (10-13 h) and ``all`` (first to last departure).
+
+    Defined as period length / trips started in the period, pooling every
+    pattern of the direction. Unlike a median of gaps this is well defined for
+    lines with branches and short-turn variants, and it is the quantity that
+    ``set_headway`` edits target. ``None`` when fewer than two trips.
+    """
+    r = tt.route_index[route] if isinstance(route, str) else int(route)
+    best: npt.NDArray[np.int64] = np.zeros(0, dtype=np.int64)
+    by_dir: dict[int, list[npt.NDArray[np.int64]]] = {}
+    for p in tt.patterns_of_route(r):
+        t0 = tt.departures(p)[:, 0].astype(np.int64)[_own_day(tt, p)]
+        by_dir.setdefault(tt.patterns[p].direction, []).append(t0)
+    for parts in by_dir.values():
+        t = np.sort(np.concatenate(parts))
+        if len(t) > len(best):
+            best = t
+    out: dict[str, float | None] = {"peak": None, "offpeak": None, "all": None}
+    if len(best) >= 2:
+        out["all"] = float(best[-1] - best[0]) / (len(best) - 1)
+    for name, (lo, hi) in (("peak", PEAK), ("offpeak", OFFPEAK)):
+        n = int(((best >= lo) & (best < hi)).sum())
+        if n >= 2:
+            out[name] = float(hi - lo) / n
+    return out

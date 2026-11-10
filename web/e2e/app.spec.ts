@@ -37,8 +37,7 @@ test('play and pause drive the clock', async ({ page }) => {
   await page.waitForTimeout(1500);
   await expect(clock).toHaveText(paused ?? '');
   // keyboard: arrow steps 5 minutes when paused
-  await page.getByTestId('map').click({ position: { x: 5, y: 5 }, trial: true });
-  await page.locator('body').press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
   await expect(clock).not.toHaveText(paused ?? '');
 });
 
@@ -59,9 +58,9 @@ test('search filters the line list', async ({ page }) => {
   await open(page);
   await page.keyboard.press('/');
   await expect(page.getByTestId('line-search')).toBeFocused();
-  await page.keyboard.type('universidad');
-  await expect(page.getByTestId('line-row-L09')).toBeVisible();
-  await expect(page.getByTestId('line-row-L04')).toHaveCount(0);
+  await page.keyboard.type('mendillorri');
+  await expect(page.getByTestId('line-row-L12')).toBeVisible();
+  await expect(page.getByTestId('line-row-L01')).toHaveCount(0);
 });
 
 test('clicking the map shows an isochrone card; Esc dismisses it', async ({ page }) => {
@@ -78,7 +77,7 @@ test('clicking the map shows an isochrone card; Esc dismisses it', async ({ page
   await expect(card.getByText('Hospitales')).toBeVisible();
   await expect(page.getByTestId('iso-pin')).toBeVisible();
   await expect(page).toHaveURL(/iso=/);
-  await card.getByRole('radio', { name: 'A pie' }).click();
+  await card.getByRole('radio', { name: 'A pie', exact: true }).click();
   await expect(page).toHaveURL(/mode=walk/);
   await page.keyboard.press('Escape');
   await expect(card).toHaveCount(0);

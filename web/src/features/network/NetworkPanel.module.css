@@ -122,9 +122,14 @@
   background: var(--surface-hover);
 }
 .chip[aria-pressed='true'] {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--bg);
+  border-color: var(--border-strong);
+  background: var(--surface-active);
+  color: var(--text);
+}
+.chip[aria-pressed='false'] {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+  text-decoration-color: var(--border-strong);
 }
 .chipCount {
   font-variant-numeric: tabular-nums;
@@ -193,7 +198,7 @@
   font-variant-numeric: tabular-nums;
 }
 .spark {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .row:hover .spark,
 .row[data-hovered='true'] .spark {

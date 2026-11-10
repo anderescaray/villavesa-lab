@@ -67,6 +67,7 @@ interface BusRenderState {
   vehicles: VehicleModel | null;
   frame: Frame;
   colors: Uint8Array;
+  haloColors: Uint8Array;
   angles: Float32Array;
   /** rgba per route index of the vehicle model */
   routeColors: Uint8Array;
@@ -82,7 +83,7 @@ function rebuildRouteColors(st: BusRenderState) {
   st.routeColors = new Uint8Array(ids.length * 4);
   ids.forEach((id, i) => {
     const [r, g, b] = parseHex(network.mapColor(id, theme));
-    st.routeColors.set([r, g, b, !highlight || highlight === id ? 255 : 56], i * 4);
+    st.routeColors.set([r, g, b, !highlight || highlight === id ? 255 : 40], i * 4);
   });
   st.haloColor = theme === 'dark' ? [14, 15, 17, 255] : [255, 255, 255, 255];
 }
@@ -113,6 +114,8 @@ function render(st: BusRenderState) {
     }
     st.angles[m] = -st.frame.bearings[m]!;
     st.colors.set(st.routeColors.subarray(routeIdx * 4, routeIdx * 4 + 4), m * 4);
+    st.haloColors.set(st.haloColor, m * 4);
+    st.haloColors[m * 4 + 3] = st.routeColors[routeIdx * 4 + 3]!;
     m++;
   }
   st.frame.count = m;
@@ -133,10 +136,16 @@ function render(st: BusRenderState) {
   const halo = new IconLayer({
     ...common,
     id: HALO_LAYER_ID,
-    data: { length: m, attributes: { getPosition: positions, getAngle: angles } },
+    data: {
+      length: m,
+      attributes: {
+        getPosition: positions,
+        getAngle: angles,
+        getColor: { value: st.haloColors.subarray(0, m * 4), size: 4, normalized: true },
+      },
+    },
     getIcon: () => 'halo',
     getSize: 70,
-    getColor: st.haloColor,
     pickable: false,
   });
   const body = new IconLayer({
@@ -181,6 +190,7 @@ export function useBusesLayer() {
       vehicles,
       frame: createFrame(cap),
       colors: new Uint8Array(cap * 4),
+      haloColors: new Uint8Array(cap * 4),
       angles: new Float32Array(cap),
       routeColors: new Uint8Array(0),
       haloColor: [255, 255, 255, 255],

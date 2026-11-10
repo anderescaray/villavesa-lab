@@ -47,13 +47,18 @@ function LineList() {
 
   const groups = useMemo(() => {
     if (!model) return [];
-    return KINDS.filter((k) => kinds[k])
-      .map((k) => ({
-        kind: k,
-        routes: model.routes.filter((r) => r.kind === k && matchRoute(r, search, model.stopById)),
-      }))
-      .filter((g) => g.routes.length);
-  }, [model, kinds, search]);
+    return (
+      KINDS.filter((k) => kinds[k])
+        .map((k) => ({
+          kind: k,
+          routes: model.routes.filter((r) => r.kind === k && matchRoute(r, search, model.stopById)),
+        }))
+        .filter((g) => g.routes.length)
+        .map((g) => ({ ...g, live: g.routes.some((r) => routeInService(r, minute * 60)) }))
+        // groups with lines running now come first (e.g. night lines after midnight)
+        .sort((a, b) => Number(b.live) - Number(a.live))
+    );
+  }, [model, kinds, search, minute]);
 
   const sparkMax = useMemo(() => {
     let m = 1;
@@ -245,8 +250,8 @@ function LineRow({
         <SparkBars
           className={s.spark}
           values={spark}
-          width={56}
-          height={18}
+          width={64}
+          height={20}
           max={sparkMax}
           highlight={Math.floor(time / 3600) - SPARK_FROM}
           label={t('network.sparklineLabel')}

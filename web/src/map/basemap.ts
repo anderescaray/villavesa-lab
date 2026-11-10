@@ -199,5 +199,7 @@ export async function loadBasemapStyle(theme: Theme): Promise<StyleSpecification
  * of the network; street names go underneath lines.
  */
 export function dataLayerAnchor(style: StyleSpecification | undefined): string | undefined {
-  return style?.layers.find((l) => /^label_|^airport/.test(l.id))?.id;
+  // neighbourhood labels (label_other) sit under the network; settlements stay on top
+  return style?.layers.find((l) => /^label_(village|town|state|city|country)|^airport/.test(l.id))
+    ?.id;
 }

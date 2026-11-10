@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { Dialog as R } from 'radix-ui';
 import type { ReactNode } from 'react';
-import { IconButton } from './Button';
+import { Button } from './Button';
 import s from './Dialog.module.css';
 
 export interface DialogProps {
@@ -32,9 +32,9 @@ export function Dialog({
           <div className={s.header}>
             <R.Title className={s.title}>{title}</R.Title>
             <R.Close asChild>
-              <IconButton label={closeLabel}>
+              <Button variant="ghost" aria-label={closeLabel} style={{ width: 32, padding: 0 }}>
                 <X strokeWidth={1.5} />
-              </IconButton>
+              </Button>
             </R.Close>
           </div>
           {description ? <R.Description className="sr-only">{description}</R.Description> : null}
