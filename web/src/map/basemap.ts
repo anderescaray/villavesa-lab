@@ -4,10 +4,7 @@
  * from the same source style so they read as one product. `VITE_BASEMAP=none` gives a blank
  * style (tests, CI, offline).
  */
-import type {
-  LayerSpecification,
-  StyleSpecification,
-} from 'maplibre-gl';
+import type { LayerSpecification, StyleSpecification } from 'maplibre-gl';
 import type { Theme } from '@/app/store';
 
 const POSITRON = 'https://tiles.openfreemap.org/styles/positron';
@@ -128,7 +125,10 @@ function themeLayer(layer: LayerSpecification, p: BasemapPalette): LayerSpecific
   if (role === 'hide') return null;
   if (role === 'keep') return layer;
   const c = p[role];
-  const paint = { ...(layer as { paint?: Record<string, unknown> }).paint } as Record<string, unknown>;
+  const paint = { ...(layer as { paint?: Record<string, unknown> }).paint } as Record<
+    string,
+    unknown
+  >;
   switch (layer.type) {
     case 'background':
       paint['background-color'] = c;

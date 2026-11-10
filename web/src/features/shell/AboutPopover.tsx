@@ -14,12 +14,19 @@ export function AboutPopover({ trigger }: { trigger: ReactNode }) {
   const set = useApp((st) => st.set);
   const { data: meta } = useMeta();
   const date = (iso: string) =>
-    new Intl.DateTimeFormat(localeOf(lang), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
-      new Date(`${iso}T12:00:00Z`),
-    );
+    new Intl.DateTimeFormat(localeOf(lang), {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    }).format(new Date(`${iso}T12:00:00Z`));
 
   return (
-    <Popover trigger={trigger} open={open} onOpenChange={(o) => set({ aboutOpen: o })} label={t('about.title')}>
+    <Popover
+      trigger={trigger}
+      open={open}
+      onOpenChange={(o) => set({ aboutOpen: o })}
+      label={t('about.title')}
+    >
       <div className={s.root} data-testid="about-popover">
         <div className={s.head}>
           <h2 className={s.title}>{t('about.title')}</h2>

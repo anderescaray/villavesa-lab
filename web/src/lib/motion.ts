@@ -5,5 +5,7 @@ export const DURATION = { fast: 150, base: 200, slow: 250 } as const;
 export const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
 export function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return (
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
 }

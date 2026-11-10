@@ -13,7 +13,15 @@ export interface EmptyStateProps {
   compact?: boolean;
 }
 
-export function EmptyState({ icon, eyebrow, title, body, points, actions, compact }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  eyebrow,
+  title,
+  body,
+  points,
+  actions,
+  compact,
+}: EmptyStateProps) {
   return (
     <div className={cx(s.root, compact && s.compact)}>
       {icon ? <span className={s.icon}>{icon}</span> : null}

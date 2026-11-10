@@ -30,8 +30,18 @@ export function TopControls() {
           value={themePref}
           onChange={(p) => set({ themePref: p })}
           options={[
-            { value: 'light', label: <Sun strokeWidth={1.75} />, ariaLabel: t('theme.light'), tooltip: t('theme.light') },
-            { value: 'dark', label: <Moon strokeWidth={1.75} />, ariaLabel: t('theme.dark'), tooltip: t('theme.dark') },
+            {
+              value: 'light',
+              label: <Sun strokeWidth={1.75} />,
+              ariaLabel: t('theme.light'),
+              tooltip: t('theme.light'),
+            },
+            {
+              value: 'dark',
+              label: <Moon strokeWidth={1.75} />,
+              ariaLabel: t('theme.dark'),
+              tooltip: t('theme.dark'),
+            },
             {
               value: 'system',
               label: <Monitor strokeWidth={1.75} />,

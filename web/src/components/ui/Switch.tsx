@@ -13,7 +13,13 @@ export function Switch({ checked, onChange, children, label }: SwitchProps) {
   const id = useId();
   return (
     <label className={s.row} htmlFor={id}>
-      <R.Root id={id} className={s.root} checked={checked} onCheckedChange={onChange} aria-label={label}>
+      <R.Root
+        id={id}
+        className={s.root}
+        checked={checked}
+        onCheckedChange={onChange}
+        aria-label={label}
+      >
         <R.Thumb className={s.thumb} />
       </R.Root>
       {children}

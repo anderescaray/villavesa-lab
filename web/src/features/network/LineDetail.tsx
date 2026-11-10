@@ -4,7 +4,14 @@ import { useApp } from '@/app/store';
 import { Button, LineBadge, MiniBarChart, SegmentedControl, Skeleton } from '@/components/ui';
 import { useClockMinute } from '@/features/time/clock';
 import { useT } from '@/i18n';
-import { displayName, formatClock, formatCurrency, formatDuration, formatMinutes, formatNumber } from '@/lib/format';
+import {
+  displayName,
+  formatClock,
+  formatCurrency,
+  formatDuration,
+  formatMinutes,
+  formatNumber,
+} from '@/lib/format';
 import { boundsOf, fitBounds } from '@/map/camera';
 import { useMapContext } from '@/map/MapContext';
 import { useNetworkModel, useVehicleModel } from './model';
@@ -76,11 +83,20 @@ export function LineDetail({ routeId }: { routeId: string }) {
   const mins = (sec: number | null) => (sec === null ? '—' : formatMinutes(sec, lang));
 
   return (
-    <div className={s.root} style={{ '--line-color': lineColor } as CSSProperties} data-testid="line-detail">
+    <div
+      className={s.root}
+      style={{ '--line-color': lineColor } as CSSProperties}
+      data-testid="line-detail"
+    >
       {back}
       <div className={s.header}>
         <div className={s.identity}>
-          <LineBadge size="lg" shortName={route.short_name} color={route.color} textColor={route.text_color} />
+          <LineBadge
+            size="lg"
+            shortName={route.short_name}
+            color={route.color}
+            textColor={route.text_color}
+          />
           <div style={{ minWidth: 0 }}>
             <h1 className={s.name}>{displayName(route.long_name)}</h1>
             <div className={s.sub}>
@@ -98,7 +114,9 @@ export function LineDetail({ routeId }: { routeId: string }) {
             options={route.patterns.map((p) => ({
               value: String(p.direction),
               label: (
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
                   {t('line.towards', { headsign: p.headsign })}
                 </span>
               ),
@@ -176,7 +194,11 @@ export function LineDetail({ routeId }: { routeId: string }) {
             return (
               <li
                 key={`${id}-${i}`}
-                className={[i === 0 && s.first, i === pattern.stop_ids.length - 1 && s.last, terminus && s.terminus]
+                className={[
+                  i === 0 && s.first,
+                  i === pattern.stop_ids.length - 1 && s.last,
+                  terminus && s.terminus,
+                ]
                   .filter(Boolean)
                   .join(' ')}
               >
@@ -185,7 +207,12 @@ export function LineDetail({ routeId }: { routeId: string }) {
                   className={s.stop}
                   onClick={() => {
                     selectStop(id);
-                    if (map && stop) map.easeTo({ center: [stop.lon, stop.lat], zoom: Math.max(map.getZoom(), 15), duration: 500 });
+                    if (map && stop)
+                      map.easeTo({
+                        center: [stop.lon, stop.lat],
+                        zoom: Math.max(map.getZoom(), 15),
+                        duration: 500,
+                      });
                   }}
                 >
                   <span className={s.track} aria-hidden>
@@ -196,7 +223,13 @@ export function LineDetail({ routeId }: { routeId: string }) {
                     {others.map((rid) => {
                       const r = model.routeById.get(rid);
                       return r ? (
-                        <LineBadge key={rid} size="sm" shortName={r.short_name} color={r.color} textColor={r.text_color} />
+                        <LineBadge
+                          key={rid}
+                          size="sm"
+                          shortName={r.short_name}
+                          color={r.color}
+                          textColor={r.text_color}
+                        />
                       ) : null;
                     })}
                   </span>

@@ -17,7 +17,13 @@ import { routeInService, useNetworkModel, type NetworkModel } from './model';
 const STOP_LAYERS = [ROUTE_LAYERS.stopsRoute, ROUTE_LAYERS.stops, ROUTE_LAYERS.stopSelected];
 const LINE_LAYERS = [ROUTE_LAYERS.hl, ROUTE_LAYERS.line];
 
-function hit(map: maplibregl.Map, x: number, y: number, layers: string[], r: number): MapGeoJSONFeature[] {
+function hit(
+  map: maplibregl.Map,
+  x: number,
+  y: number,
+  layers: string[],
+  r: number,
+): MapGeoJSONFeature[] {
   const existing = layers.filter((l) => map.getLayer(l));
   if (!existing.length) return [];
   return map.queryRenderedFeatures(

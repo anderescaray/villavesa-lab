@@ -7,10 +7,15 @@ const KEY = 'vlab.prefs';
 
 export function loadPrefs(): { lang?: Lang; themePref?: ThemePref } {
   try {
-    const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as { lang?: string; themePref?: string };
+    const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as {
+      lang?: string;
+      themePref?: string;
+    };
     return {
       lang: LANGS.includes(raw.lang as Lang) ? (raw.lang as Lang) : undefined,
-      themePref: ['light', 'dark', 'system'].includes(raw.themePref ?? '') ? (raw.themePref as ThemePref) : undefined,
+      themePref: ['light', 'dark', 'system'].includes(raw.themePref ?? '')
+        ? (raw.themePref as ThemePref)
+        : undefined,
     };
   } catch {
     return {};

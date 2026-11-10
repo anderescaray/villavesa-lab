@@ -482,7 +482,8 @@ export const eu: Messages = {
   'iso.destinations': 'Iristen diren helmugak',
   'iso.within': '{n} minututan',
   'iso.close': 'Itxi isokronoa',
-  'iso.hint': 'Egin klik maparen edozein puntutan autobusez eta oinez noraino iristen zaren ikusteko.',
+  'iso.hint':
+    'Egin klik maparen edozein puntutan autobusez eta oinez noraino iristen zaren ikusteko.',
   'iso.error': 'Ezin izan da isokronoa kalkulatu.',
   'iso.retry': 'Saiatu berriro',
   'iso.loading': 'Bidaia-denborak kalkulatzen',
@@ -515,7 +516,8 @@ export const eu: Messages = {
   'scenario.title': 'Agertoki-editorea',
   'scenario.lead':
     'Gehitu, mugitu edo kendu geltokiak, marraztu linea berri bat kaleetan zehar, aldatu maiztasunak edo eman lehentasuna autobusari tarte batean, eta ikusi eragina berehala.',
-  'scenario.point1': 'Gaurko sarearekin alderatuta irisgarritasuna irabazi edo galtzen duten pertsonak',
+  'scenario.point1':
+    'Gaurko sarearekin alderatuta irisgarritasuna irabazi edo galtzen duten pertsonak',
   'scenario.point2': 'Batez besteko bidaia-denbora, flota eta behar diren autobus-orduak',
   'scenario.point3': 'Aldaketaren urteko kostu estimatua',
   'optimizer.title': 'Optimizatzailea',

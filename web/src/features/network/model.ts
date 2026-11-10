@@ -98,17 +98,14 @@ export function routeInService(r: Route, time: number): boolean {
 }
 
 /** Search across line number, name and served stop names (accent-insensitive). */
-const fold = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase();
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export function matchRoute(r: Route, query: string, stopById: Map<string, Stop>): boolean {
   const q = fold(query.trim());
   if (!q) return true;
   if (fold(r.short_name).includes(q) || fold(r.long_name).includes(q)) return true;
-  if (/^\d+$/.test(q) && fold(r.short_name).replace(/^[a-z]0*/, '') === q.replace(/^0+/, '')) return true;
+  if (/^\d+$/.test(q) && fold(r.short_name).replace(/^[a-z]0*/, '') === q.replace(/^0+/, ''))
+    return true;
   for (const p of r.patterns) {
     if (fold(p.headsign).includes(q)) return true;
     for (const id of p.stop_ids) {
@@ -125,7 +122,11 @@ const headsignCache = new WeakMap<VehicleModel, Map<number, string | null>>();
  * Headsign of a vehicle trip. `/api/vehicles` carries no headsign/direction (see proposed
  * contract changes), so we match the trip's shape end point to the closest pattern end.
  */
-export function headsignForTrip(network: NetworkModel, vehicles: VehicleModel, trip: number): string | null {
+export function headsignForTrip(
+  network: NetworkModel,
+  vehicles: VehicleModel,
+  trip: number,
+): string | null {
   let cache = headsignCache.get(vehicles);
   if (!cache) headsignCache.set(vehicles, (cache = new Map()));
   const shapeIdx = vehicles.index.shapeOf[trip] ?? -1;

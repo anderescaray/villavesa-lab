@@ -9,7 +9,8 @@ const isTyping = (el: EventTarget | null) =>
 
 const isInteractive = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
-  (['BUTTON', 'A'].includes(el.tagName) || ['slider', 'radio', 'tab', 'option', 'menuitem'].includes(el.getAttribute('role') ?? ''));
+  (['BUTTON', 'A'].includes(el.tagName) ||
+    ['slider', 'radio', 'tab', 'option', 'menuitem'].includes(el.getAttribute('role') ?? ''));
 
 const NEXT_THEME: Record<ThemePref, ThemePref> = { light: 'dark', dark: 'system', system: 'light' };
 
@@ -18,7 +19,11 @@ export function useGlobalShortcuts() {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
       const app = useApp.getState();
-      if (document.querySelector('[role="dialog"][data-state="open"], [role="listbox"]') && e.key !== '?') return;
+      if (
+        document.querySelector('[role="dialog"][data-state="open"], [role="listbox"]') &&
+        e.key !== '?'
+      )
+        return;
       if (e.key === 'Escape') {
         if (app.aboutOpen) return;
         if (app.clearTop()) e.preventDefault();
@@ -32,8 +37,13 @@ export function useGlobalShortcuts() {
           break;
         case 'ArrowLeft':
         case 'ArrowRight':
-          if (isInteractive(e.target) && (e.target as HTMLElement).getAttribute('role') === 'slider') return;
-          if (isInteractive(e.target) && (e.target as HTMLElement).getAttribute('role') === 'radio') return;
+          if (
+            isInteractive(e.target) &&
+            (e.target as HTMLElement).getAttribute('role') === 'slider'
+          )
+            return;
+          if (isInteractive(e.target) && (e.target as HTMLElement).getAttribute('role') === 'radio')
+            return;
           clockActions.step((e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 60 : 300));
           break;
         case '/':

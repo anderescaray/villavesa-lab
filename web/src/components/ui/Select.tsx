@@ -34,7 +34,12 @@ export function Select<T extends string>({
     <R.Root value={value} onValueChange={(v) => onChange(v as T)}>
       <R.Trigger
         aria-label={label}
-        className={cx(s.trigger, size === 'sm' && s.sm, variant === 'ghost' && s.ghostTrigger, className)}
+        className={cx(
+          s.trigger,
+          size === 'sm' && s.sm,
+          variant === 'ghost' && s.ghostTrigger,
+          className,
+        )}
       >
         <R.Value />
         <R.Icon asChild>

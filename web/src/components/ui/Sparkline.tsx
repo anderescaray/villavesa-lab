@@ -30,7 +30,14 @@ export function SparkBars({
   const n = Math.max(1, values.length);
   const bw = Math.max(1, (width - gap * (n - 1)) / n);
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label} className={className}>
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={label}
+      className={className}
+    >
       {values.map((v, i) => {
         const h = v > 0 ? Math.max(1.5, (v / m) * height) : 0;
         return (
@@ -110,7 +117,15 @@ export function MiniBarChart({
             </g>
           );
         })}
-        <line x1={0} x2={W} y1={height - 0.5} y2={height - 0.5} stroke="var(--border-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <line
+          x1={0}
+          x2={W}
+          y1={height - 0.5}
+          y2={height - 0.5}
+          stroke="var(--border-strong)"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
       </svg>
       <div
         aria-hidden

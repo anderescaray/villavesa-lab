@@ -15,7 +15,12 @@ export function PanelToggle() {
   if (open) return null;
   return (
     <Surface className={s.panelToggle} style={{ padding: 4 }}>
-      <IconButton label={t('shell.expandPanel')} shortcut="[" tooltipSide="right" onClick={() => set({ panelOpen: true })}>
+      <IconButton
+        label={t('shell.expandPanel')}
+        shortcut="["
+        tooltipSide="right"
+        onClick={() => set({ panelOpen: true })}
+      >
         <PanelLeftOpen strokeWidth={1.5} />
       </IconButton>
     </Surface>
@@ -29,10 +34,20 @@ export function MapControls() {
   const iso = useApp((st) => st.isoOrigin);
   return (
     <Surface className={s.mapControls} style={iso ? undefined : undefined}>
-      <IconButton size="sm" tooltipSide="left" label={t('map.zoomIn')} onClick={() => map?.zoomIn({ duration: 200 })}>
+      <IconButton
+        size="sm"
+        tooltipSide="left"
+        label={t('map.zoomIn')}
+        onClick={() => map?.zoomIn({ duration: 200 })}
+      >
         <Plus strokeWidth={1.5} />
       </IconButton>
-      <IconButton size="sm" tooltipSide="left" label={t('map.zoomOut')} onClick={() => map?.zoomOut({ duration: 200 })}>
+      <IconButton
+        size="sm"
+        tooltipSide="left"
+        label={t('map.zoomOut')}
+        onClick={() => map?.zoomOut({ duration: 200 })}
+      >
         <Minus strokeWidth={1.5} />
       </IconButton>
       <IconButton
@@ -40,7 +55,11 @@ export function MapControls() {
         tooltipSide="left"
         label={t('map.resetView')}
         onClick={() => {
-          if (map && meta) fitBounds(map, [[meta.bbox[0], meta.bbox[1]], [meta.bbox[2], meta.bbox[3]]]);
+          if (map && meta)
+            fitBounds(map, [
+              [meta.bbox[0], meta.bbox[1]],
+              [meta.bbox[2], meta.bbox[3]],
+            ]);
         }}
       >
         <Maximize strokeWidth={1.5} />

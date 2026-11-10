@@ -38,7 +38,8 @@ export function parseHash(hash: string): UrlState {
   const [pathPart, query = ''] = hash.replace(/^#\/?/, '').split('?');
   const seg = (pathPart ?? '').split('/')[0] ?? '';
   const q = new URLSearchParams(query);
-  const route: UrlState['route'] = seg === 'dev' ? 'dev' : VIEWS.includes(seg as ViewId) ? (seg as ViewId) : 'network';
+  const route: UrlState['route'] =
+    seg === 'dev' ? 'dev' : VIEWS.includes(seg as ViewId) ? (seg as ViewId) : 'network';
   const out: UrlState = { route };
   const line = q.get('line');
   if (line) out.line = line;

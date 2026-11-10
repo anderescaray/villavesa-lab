@@ -26,7 +26,11 @@ export function MapCanvas({ children }: { children?: ReactNode }) {
   const t = useT();
   const theme = useApp((st) => st.theme);
   const container = useRef<HTMLDivElement>(null);
-  const [ctx, setCtx] = useState<MapContextValue>({ map: null, styleVersion: 0, anchor: undefined });
+  const [ctx, setCtx] = useState<MapContextValue>({
+    map: null,
+    styleVersion: 0,
+    anchor: undefined,
+  });
   const mapRef = useRef<MlMap | null>(null);
   const themeRef = useRef(theme);
 
@@ -98,7 +102,13 @@ export function MapCanvas({ children }: { children?: ReactNode }) {
 
   return (
     <MapContext.Provider value={ctx}>
-      <div className={s.map} ref={container} role="region" aria-label={t('map.label')} data-testid="map" />
+      <div
+        className={s.map}
+        ref={container}
+        role="region"
+        aria-label={t('map.label')}
+        data-testid="map"
+      />
       {children}
     </MapContext.Provider>
   );

@@ -13,12 +13,22 @@ export interface DialogProps {
   children: ReactNode;
 }
 
-export function Dialog({ open, onOpenChange, title, description, closeLabel, children }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  closeLabel,
+  children,
+}: DialogProps) {
   return (
     <R.Root open={open} onOpenChange={onOpenChange}>
       <R.Portal>
         <R.Overlay className={s.overlay} />
-        <R.Content className={s.content} {...(description ? {} : { "aria-describedby": undefined })}>
+        <R.Content
+          className={s.content}
+          {...(description ? {} : { 'aria-describedby': undefined })}
+        >
           <div className={s.header}>
             <R.Title className={s.title}>{title}</R.Title>
             <R.Close asChild>

@@ -1,5 +1,12 @@
 import { Pause, Play } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import { DAY_TYPES, type DayType } from '@/api/types';
 import { useApp } from '@/app/store';
 import { AnimatedNumber, SegmentedControl, Select, Skeleton, Surface } from '@/components/ui';
@@ -17,10 +24,25 @@ function Histogram({ series, max }: { series: number[]; max: number }) {
   const n = series.length;
   const bw = HIST_W / Math.max(1, n);
   return (
-    <svg width="100%" height={HIST_H} viewBox={`0 0 ${HIST_W} ${HIST_H}`} preserveAspectRatio="none" aria-hidden>
+    <svg
+      width="100%"
+      height={HIST_H}
+      viewBox={`0 0 ${HIST_W} ${HIST_H}`}
+      preserveAspectRatio="none"
+      aria-hidden
+    >
       {series.map((v, i) => {
         const h = v > 0 ? Math.max(1, (v / max) * HIST_H) : 0;
-        return <rect key={i} x={i * bw + 0.5} y={HIST_H - h} width={Math.max(0.5, bw - 1)} height={h} fill="currentColor" />;
+        return (
+          <rect
+            key={i}
+            x={i * bw + 0.5}
+            y={HIST_H - h}
+            width={Math.max(0.5, bw - 1)}
+            height={h}
+            fill="currentColor"
+          />
+        );
       })}
     </svg>
   );
@@ -120,7 +142,12 @@ export function TimeControl() {
   const formatCount = useCallback((n: number) => formatNumber(Math.round(n), lang), [lang]);
 
   return (
-    <Surface className={s.bar} role="group" aria-label={t('time.scrubber')} data-testid="time-control">
+    <Surface
+      className={s.bar}
+      role="group"
+      aria-label={t('time.scrubber')}
+      data-testid="time-control"
+    >
       <button
         type="button"
         className={s.play}

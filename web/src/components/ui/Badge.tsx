@@ -24,12 +24,25 @@ export interface LineBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 /** Line chip in the operator's GTFS colour, with AA-contrast text. */
-export function LineBadge({ shortName, color, textColor, size = 'md', className, ...rest }: LineBadgeProps) {
+export function LineBadge({
+  shortName,
+  color,
+  textColor,
+  size = 'md',
+  className,
+  ...rest
+}: LineBadgeProps) {
   const fg = useMemo(() => readableTextOn(color, textColor), [color, textColor]);
   const ring = useMemo(() => contrastRatio(color, '#FFFFFF') < 1.4, [color]);
   return (
     <span
-      className={cx(s.line, size === 'lg' && s.lineLg, size === 'sm' && s.lineSm, ring && s.ring, className)}
+      className={cx(
+        s.line,
+        size === 'lg' && s.lineLg,
+        size === 'sm' && s.lineSm,
+        ring && s.ring,
+        className,
+      )}
       style={{ background: color, color: fg }}
       {...rest}
     >

@@ -11,7 +11,13 @@ export function parseHex(hex: string): RGB {
 }
 
 export const toHex = ([r, g, b]: RGB) =>
-  `#${[r, g, b].map((v) => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('')}`;
+  `#${[r, g, b]
+    .map((v) =>
+      Math.round(Math.min(255, Math.max(0, v)))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
 
 const channel = (v: number) => {
   const c = v / 255;
@@ -40,7 +46,12 @@ export function readableTextOn(bg: string, preferred?: string): string {
   if (preferred && contrastRatio(bg, preferred) >= 4.5) return preferred.toUpperCase();
   const dark = '#0F1216';
   const light = '#FFFFFF';
-  return contrastRatio(bg, dark) >= contrastRatio(bg, light) ? dark : light;
+  const best = contrastRatio(bg, dark) >= contrastRatio(bg, light) ? dark : light;
+  // mid-tones (e.g. slate #607C8C) only reach AA with pure black
+  if (contrastRatio(bg, best) < 4.5 && contrastRatio(bg, '#000000') > contrastRatio(bg, best)) {
+    return '#000000';
+  }
+  return best;
 }
 
 export function mix(a: string, b: string, t: number): string {

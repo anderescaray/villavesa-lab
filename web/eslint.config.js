@@ -13,8 +13,12 @@ export default tseslint.config(
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // feature modules intentionally co-locate small hooks/constants with their component
+      'react-refresh/only-export-components': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/refs': 'off',
     },
@@ -23,5 +27,11 @@ export default tseslint.config(
     files: ['**/*.{js,mjs}'],
     extends: [js.configs.recommended],
     languageOptions: { ecmaVersion: 2023, sourceType: 'module', globals: { ...globals.node } },
+    rules: { 'no-unused-vars': ['error', { ignoreRestSiblings: true }] },
+  },
+  {
+    // Playwright scripts evaluate callbacks in the browser
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 );

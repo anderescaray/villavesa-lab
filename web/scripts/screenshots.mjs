@@ -43,7 +43,10 @@ const browser = await chromium.launch(launchOptions);
 const DESKTOP = { width: 1440, height: 900 };
 const TABLET = { width: 820, height: 1180 };
 
-async function shot(name, { hash, theme = 'light', lang = 'es', viewport = DESKTOP, before, after }) {
+async function shot(
+  name,
+  { hash, theme = 'light', lang = 'es', viewport = DESKTOP, before, after },
+) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2 });
   await ctx.addInitScript(
     ([t, l]) => {
@@ -57,16 +60,24 @@ async function shot(name, { hash, theme = 'light', lang = 'es', viewport = DESKT
   await page.goto(`${base}/${hash}`);
   await page.waitForSelector('[data-testid="time-control"], h1');
   await page
-    .waitForFunction(() => window.__vlabMap?.isStyleLoaded() && window.__vlabMap?.areTilesLoaded(), null, {
-      timeout: 20000,
-    })
+    .waitForFunction(
+      () => window.__vlabMap?.isStyleLoaded() && window.__vlabMap?.areTilesLoaded(),
+      null,
+      {
+        timeout: 20000,
+      },
+    )
     .catch(() => undefined);
   await page.waitForTimeout(1200);
   if (after) await after(page);
   await page
-    .waitForFunction(() => window.__vlabMap?.areTilesLoaded() && !window.__vlabMap?.isMoving(), null, {
-      timeout: 15000,
-    })
+    .waitForFunction(
+      () => window.__vlabMap?.areTilesLoaded() && !window.__vlabMap?.isMoving(),
+      null,
+      {
+        timeout: 15000,
+      },
+    )
     .catch(() => undefined);
   await page.waitForTimeout(900);
   await page.screenshot({ path: resolve(out, `${name}.png`) });
@@ -115,7 +126,7 @@ await shot('14-about-data', {
   },
 });
 await shot('15-tablet', { hash: `#/network?${q(iso)}`, viewport: TABLET });
-await shot('16-night', { hash: `#/network?day=saturday&t=2350&play=0` , theme: 'dark'});
+await shot('16-night', { hash: `#/network?day=saturday&t=2350&play=0`, theme: 'dark' });
 await shot('17-components-light', { hash: '#/dev/components' });
 await shot('18-components-dark', { hash: '#/dev/components', theme: 'dark' });
 

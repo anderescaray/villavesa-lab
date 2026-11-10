@@ -9,6 +9,10 @@ export interface MapContextValue {
   anchor: string | undefined;
 }
 
-export const MapContext = createContext<MapContextValue>({ map: null, styleVersion: 0, anchor: undefined });
+export const MapContext = createContext<MapContextValue>({
+  map: null,
+  styleVersion: 0,
+  anchor: undefined,
+});
 
 export const useMapContext = () => useContext(MapContext);

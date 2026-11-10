@@ -1,4 +1,11 @@
-import { BarChart3, GitCompareArrows, Keyboard, Map as MapIcon, PencilRuler, Sparkles } from 'lucide-react';
+import {
+  BarChart3,
+  GitCompareArrows,
+  Keyboard,
+  Map as MapIcon,
+  PencilRuler,
+  Sparkles,
+} from 'lucide-react';
 import type { ComponentType } from 'react';
 import { useApp, VIEWS, type ViewId } from '@/app/store';
 import { Tooltip } from '@/components/ui';
@@ -6,7 +13,10 @@ import { useT, type MessageKey } from '@/i18n';
 import { BrandMark } from './Brand';
 import s from './Shell.module.css';
 
-export const VIEW_META: Record<ViewId, { icon: ComponentType<{ strokeWidth?: number }>; label: MessageKey }> = {
+export const VIEW_META: Record<
+  ViewId,
+  { icon: ComponentType<{ strokeWidth?: number }>; label: MessageKey }
+> = {
   network: { icon: MapIcon, label: 'nav.network' },
   accessibility: { icon: BarChart3, label: 'nav.accessibility' },
   scenario: { icon: PencilRuler, label: 'nav.scenario' },
@@ -22,7 +32,12 @@ export function Rail() {
   return (
     <nav className={s.rail} aria-label={t('nav.label')}>
       <Tooltip content={t('app.tagline')} side="right">
-        <button type="button" className={s.brand} aria-label={t('app.name')} onClick={() => setView('network')}>
+        <button
+          type="button"
+          className={s.brand}
+          aria-label={t('app.name')}
+          onClick={() => setView('network')}
+        >
           <BrandMark size={28} />
         </button>
       </Tooltip>

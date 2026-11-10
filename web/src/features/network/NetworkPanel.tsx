@@ -83,14 +83,24 @@ function LineList() {
           )}
         </div>
         <div className={s.totals} aria-label={t('network.perDay')}>
-          <Stat size="sm" label={t('network.totalsFleet')} value={model?.network.totals.fleet} format={nf} />
+          <Stat
+            size="sm"
+            label={t('network.totalsFleet')}
+            value={model?.network.totals.fleet}
+            format={nf}
+          />
           <Stat
             size="sm"
             label={t('network.totalsBusHours')}
             value={model?.network.totals.bus_hours}
             format={nf}
           />
-          <Stat size="sm" label={t('network.totalsTrips')} value={model?.network.totals.trips} format={nf} />
+          <Stat
+            size="sm"
+            label={t('network.totalsTrips')}
+            value={model?.network.totals.trips}
+            format={nf}
+          />
         </div>
         <div className={s.search}>
           <Search strokeWidth={1.75} />
@@ -116,7 +126,12 @@ function LineList() {
           />
           <span className={s.searchEnd}>
             {search ? (
-              <button type="button" className={s.clear} aria-label={t('network.clearSearch')} onClick={() => set({ search: '' })}>
+              <button
+                type="button"
+                className={s.clear}
+                aria-label={t('network.clearSearch')}
+                onClick={() => set({ search: '' })}
+              >
                 <X size={14} strokeWidth={1.75} />
               </button>
             ) : (
@@ -126,7 +141,13 @@ function LineList() {
         </div>
         <div className={s.filters} role="group" aria-label={t('network.listLabel')}>
           {KINDS.filter((k) => counts[k] > 0).map((k) => (
-            <button key={k} type="button" className={s.chip} aria-pressed={kinds[k]} onClick={() => toggleKind(k)}>
+            <button
+              key={k}
+              type="button"
+              className={s.chip}
+              aria-pressed={kinds[k]}
+              onClick={() => toggleKind(k)}
+            >
               {t(`network.kind.${k}`)}
               <span className={s.chipCount}>{counts[k]}</span>
             </button>

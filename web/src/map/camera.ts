@@ -2,7 +2,7 @@ import type { LngLatBoundsLike, Map as MlMap, PaddingOptions } from 'maplibre-gl
 import { useApp } from '@/app/store';
 import { prefersReducedMotion } from '@/lib/motion';
 
-export const DEFAULT_CENTER: [number, number] = [-1.6440, 42.8125];
+export const DEFAULT_CENTER: [number, number] = [-1.644, 42.8125];
 export const DEFAULT_ZOOM = 12.4;
 
 /** Camera padding that keeps content clear of the side panel and floating surfaces. */
@@ -28,7 +28,9 @@ export function fitBounds(map: MlMap, bounds: LngLatBoundsLike, extra?: Partial<
   });
 }
 
-export function boundsOf(coords: Iterable<[number, number]>): [[number, number], [number, number]] | null {
+export function boundsOf(
+  coords: Iterable<[number, number]>,
+): [[number, number], [number, number]] | null {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -39,5 +41,10 @@ export function boundsOf(coords: Iterable<[number, number]>): [[number, number],
     if (x > maxX) maxX = x;
     if (y > maxY) maxY = y;
   }
-  return Number.isFinite(minX) ? [[minX, minY], [maxX, maxY]] : null;
+  return Number.isFinite(minX)
+    ? [
+        [minX, minY],
+        [maxX, maxY],
+      ]
+    : null;
 }

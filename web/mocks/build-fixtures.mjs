@@ -166,7 +166,11 @@ const routes = new Map();
 for (const r of routesCsv.rows) {
   const g = (n) => r[routesCsv.col(n)];
   const short = g('route_short_name');
-  const kind = /^N\d/.test(short) ? 'night' : /^R\d/.test(short) || short === 'L60' ? 'special' : 'day';
+  const kind = /^N\d/.test(short)
+    ? 'night'
+    : /^R\d/.test(short) || short === 'L60'
+      ? 'special'
+      : 'day';
   routes.set(g('route_id'), {
     id: g('route_id'),
     short_name: short,
@@ -210,8 +214,12 @@ for (const r of tripsCsv.rows) {
   });
 }
 
-const neededServices = new Set(Object.values(DAYS).flatMap((d) => [...(servicesByDate.get(d) ?? [])]));
-const neededTrips = new Set([...trips.values()].filter((t) => neededServices.has(t.service)).map((t) => t.id));
+const neededServices = new Set(
+  Object.values(DAYS).flatMap((d) => [...(servicesByDate.get(d) ?? [])]),
+);
+const neededTrips = new Set(
+  [...trips.values()].filter((t) => neededServices.has(t.service)).map((t) => t.id),
+);
 
 console.log('[fixtures] parsing stop_times…');
 const stText = txt('stop_times.txt');
@@ -229,7 +237,12 @@ for (const line of stLines) {
   if (!neededTrips.has(tripId)) continue;
   let arr = stopTimes.get(tripId);
   if (!arr) stopTimes.set(tripId, (arr = []));
-  arr.push({ seq: Number(f[cSeq]), stop: f[cStop], arr: hms(f[cArr] || f[cDep]), dep: hms(f[cDep] || f[cArr]) });
+  arr.push({
+    seq: Number(f[cSeq]),
+    stop: f[cStop],
+    arr: hms(f[cArr] || f[cDep]),
+    dep: hms(f[cDep] || f[cArr]),
+  });
 }
 for (const arr of stopTimes.values()) arr.sort((a, b) => a.seq - b.seq);
 
@@ -294,7 +307,9 @@ const COST = { eur_per_bus_hour: 60, eur_per_km: 1.2, eur_per_bus_year: 45000 };
 
 function buildDay(day, date) {
   const services = servicesByDate.get(date) ?? new Set();
-  const dayTrips = [...trips.values()].filter((t) => services.has(t.service) && stopTimes.has(t.id));
+  const dayTrips = [...trips.values()].filter(
+    (t) => services.has(t.service) && stopTimes.has(t.id),
+  );
   const byRoute = new Map();
   for (const t of dayTrips) {
     if (!byRoute.has(t.route)) byRoute.set(t.route, []);
@@ -313,7 +328,10 @@ function buildDay(day, date) {
     const ra = routes.get(a);
     const rb = routes.get(b);
     const kindOrder = { day: 0, special: 1, night: 2 };
-    return kindOrder[ra.kind] - kindOrder[rb.kind] || ra.short_name.localeCompare(rb.short_name, 'en', { numeric: true });
+    return (
+      kindOrder[ra.kind] - kindOrder[rb.kind] ||
+      ra.short_name.localeCompare(rb.short_name, 'en', { numeric: true })
+    );
   });
 
   for (const routeId of routeIds) {
@@ -340,7 +358,8 @@ function buildDay(day, date) {
       const sh = shapes.get(shapeId);
       const offs = offsetsFor(shapeId, stopIds);
       const headsignCount = new Map();
-      for (const t of gTrips) headsignCount.set(t.headsign, (headsignCount.get(t.headsign) ?? 0) + 1);
+      for (const t of gTrips)
+        headsignCount.set(t.headsign, (headsignCount.get(t.headsign) ?? 0) + 1);
       patterns.push({
         id: `${routeId}:${dir}`,
         direction: dir,
@@ -360,11 +379,18 @@ function buildDay(day, date) {
     const durByDir = [[], []];
     for (const t of rTrips) {
       const st = stopTimes.get(t.id);
-      const offs = offsetsFor(t.shape, st.map((s) => s.stop));
+      const offs = offsetsFor(
+        t.shape,
+        st.map((s) => s.stop),
+      );
       if (!vehShapeIdx.has(t.shape)) {
         vehShapeIdx.set(t.shape, vehShapes.length);
         const sh = shapes.get(t.shape);
-        vehShapes.push({ id: vehShapes.length, path: sh.path.map(([x, y]) => [r6(x), r6(y)]), cum_m: sh.cum.map(r1) });
+        vehShapes.push({
+          id: vehShapes.length,
+          path: sh.path.map(([x, y]) => [r6(x), r6(y)]),
+          cum_m: sh.cum.map(r1),
+        });
       }
       const tt = [];
       const dd = [];
@@ -377,7 +403,13 @@ function buildDay(day, date) {
         dd.push(r1(offs[i]));
       });
       for (let i = 1; i < tt.length; i++) if (tt[i] < tt[i - 1]) tt[i] = tt[i - 1];
-      vehTrips.push({ route: routeId, shape: vehShapeIdx.get(t.shape), headsign: t.headsign, t: tt, d: dd });
+      vehTrips.push({
+        route: routeId,
+        shape: vehShapeIdx.get(t.shape),
+        headsign: t.headsign,
+        t: tt,
+        d: dd,
+      });
       const start = tt[0];
       const end = tt[tt.length - 1];
       intervals.push([start, end]);
@@ -393,7 +425,8 @@ function buildDay(day, date) {
     }
     const mainDir = depsByDir[0].length >= depsByDir[1].length ? 0 : 1;
     const mainPattern = patterns.find((p) => p.direction === mainDir) ?? patterns[0];
-    const lengthM = mainPattern.stop_offsets[mainPattern.stop_offsets.length - 1] - mainPattern.stop_offsets[0];
+    const lengthM =
+      mainPattern.stop_offsets[mainPattern.stop_offsets.length - 1] - mainPattern.stop_offsets[0];
     const allDur = rTrips.map((t) => {
       const st = stopTimes.get(t.id);
       return st[st.length - 1].arr - st[0].dep;
@@ -489,9 +522,17 @@ function mockPois() {
   for (const s of stops.values()) {
     const rule = POI_RULES.find(([, re]) => re.test(s.name));
     if (!rule) continue;
-    const near = out.find((p) => p.category === rule[0] && haversine([p.lon, p.lat], [s.lon, s.lat]) < 350);
+    const near = out.find(
+      (p) => p.category === rule[0] && haversine([p.lon, p.lat], [s.lon, s.lat]) < 350,
+    );
     if (near) continue;
-    out.push({ id: `mock-${out.length}`, category: rule[0], name: s.name, lon: r6(s.lon), lat: r6(s.lat) });
+    out.push({
+      id: `mock-${out.length}`,
+      category: rule[0],
+      name: s.name,
+      lon: r6(s.lon),
+      lat: r6(s.lat),
+    });
   }
   return out;
 }
@@ -522,7 +563,14 @@ graph.bbox = bbox;
 write('graph.json', graph);
 write('pois.json', { pois });
 
-const cats = ['hospital', 'health_centre', 'university', 'industrial_estate', 'city_centre', 'secondary_school'];
+const cats = [
+  'hospital',
+  'health_centre',
+  'university',
+  'industrial_estate',
+  'city_centre',
+  'secondary_school',
+];
 const agencyName = agencyCsv.rows[0][agencyCsv.col('agency_name')];
 write('meta.json', {
   feed: {
@@ -539,7 +587,10 @@ write('meta.json', {
   n_zones: 3200,
   poi_categories: cats.map((id) => ({ id, count: pois.filter((p) => p.category === id).length })),
   default_window: { day: 'weekday', start: 28800, duration: 3600 },
-  cost_params: { ...COST, source: 'MOCK placeholder values (not sourced) — replaced by the engine cost model.' },
+  cost_params: {
+    ...COST,
+    source: 'MOCK placeholder values (not sourced) — replaced by the engine cost model.',
+  },
   data_notes: [
     'MOCK API: isochrones, population and POI counts are synthetic placeholders until the routing engine is connected.',
     'Routes, stops, shapes and timetables come from the official TUC Pamplona GTFS (NAP feed 1177).',

@@ -17,7 +17,12 @@ export function SidePanel() {
     <aside className={s.panel} data-open={open} aria-hidden={!open} data-testid="side-panel">
       <div className={s.panelBar}>
         <Wordmark />
-        <IconButton label={t('shell.collapsePanel')} shortcut="[" size="sm" onClick={() => set({ panelOpen: false })}>
+        <IconButton
+          label={t('shell.collapsePanel')}
+          shortcut="["
+          size="sm"
+          onClick={() => set({ panelOpen: false })}
+        >
           <PanelLeftClose strokeWidth={1.5} />
         </IconButton>
       </div>

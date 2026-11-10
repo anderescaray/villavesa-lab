@@ -38,7 +38,11 @@ export function ShortcutsDialog() {
     >
       <div
         data-testid="shortcuts-dialog"
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-6)' }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 'var(--space-6)',
+        }}
       >
         {GROUPS.map((g) => (
           <section key={g.title}>

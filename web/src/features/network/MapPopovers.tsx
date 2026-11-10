@@ -46,7 +46,11 @@ export function StopPopover() {
             <div className={s.stopName}>{stop.name}</div>
             <div className={s.stopId}>{t('stop.label', { id: stop.id })}</div>
           </div>
-          <IconButton label={t('common.close')} size="sm" onClick={() => useApp.getState().selectStop(null)}>
+          <IconButton
+            label={t('common.close')}
+            size="sm"
+            onClick={() => useApp.getState().selectStop(null)}
+          >
             <X strokeWidth={1.5} />
           </IconButton>
         </div>
@@ -70,7 +74,9 @@ export function StopPopover() {
             variant="ghost"
             size="sm"
             onClick={() =>
-              useApp.getState().setIsoOrigin([stop.lon, stop.lat], snapIsoStart(clock.getState().time))
+              useApp
+                .getState()
+                .setIsoOrigin([stop.lon, stop.lat], snapIsoStart(clock.getState().time))
             }
           >
             <Target strokeWidth={1.75} />
@@ -93,7 +99,12 @@ export function BusTooltip() {
   if (!route) return null;
   const headsign = headsignForTrip(model, vehicles, hover.trip);
   return (
-    <div className={s.tooltip} style={{ left: hover.x, top: hover.y }} role="tooltip" data-testid="bus-tooltip">
+    <div
+      className={s.tooltip}
+      style={{ left: hover.x, top: hover.y }}
+      role="tooltip"
+      data-testid="bus-tooltip"
+    >
       <LineBadge shortName={route.short_name} color={route.color} textColor={route.text_color} />
       {headsign ? t('bus.towards', { headsign }) : route.long_name}
     </div>

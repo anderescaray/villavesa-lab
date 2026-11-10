@@ -2,14 +2,29 @@ import { RotateCw, X } from 'lucide-react';
 import { useCallback } from 'react';
 import type { IsochroneMode } from '@/api/types';
 import { useApp } from '@/app/store';
-import { AnimatedNumber, Button, IconButton, SegmentedControl, Skeleton, Surface } from '@/components/ui';
+import {
+  AnimatedNumber,
+  Button,
+  IconButton,
+  SegmentedControl,
+  Skeleton,
+  Surface,
+} from '@/components/ui';
 import { poiLabel, useT } from '@/i18n';
 import { formatClock, formatCompact, formatNumber } from '@/lib/format';
 import { ISO_COLORS } from '@/lib/palettes';
 import { CUTOFFS, ISO_WINDOW, useIsochroneResult } from './useIsochroneRequest';
 import s from './IsochroneCard.module.css';
 
-const POI_ORDER = ['hospital', 'health_centre', 'university', 'industrial_estate', 'city_centre', 'secondary_school', 'supermarket'];
+const POI_ORDER = [
+  'hospital',
+  'health_centre',
+  'university',
+  'industrial_estate',
+  'city_centre',
+  'secondary_school',
+  'supermarket',
+];
 
 export function IsochroneCard() {
   const t = useT();
@@ -35,13 +50,26 @@ export function IsochroneCard() {
     : [];
 
   return (
-    <Surface className={s.card} role="region" aria-label={t('iso.title')} data-testid="iso-card" aria-busy={query.isFetching}>
+    <Surface
+      className={s.card}
+      role="region"
+      aria-label={t('iso.title')}
+      data-testid="iso-card"
+      aria-busy={query.isFetching}
+    >
       <div className={s.header}>
         <div>
           <h2 className={s.title}>{t('iso.title')}</h2>
-          <div className={s.subtitle}>{t('iso.subtitle', { day: t(`day.${day}`), time: formatClock(start) })}</div>
+          <div className={s.subtitle}>
+            {t('iso.subtitle', { day: t(`day.${day}`), time: formatClock(start) })}
+          </div>
         </div>
-        <IconButton label={t('iso.close')} shortcut="Esc" size="sm" onClick={() => set({ isoOrigin: null })}>
+        <IconButton
+          label={t('iso.close')}
+          shortcut="Esc"
+          size="sm"
+          onClick={() => set({ isoOrigin: null })}
+        >
           <X strokeWidth={1.5} />
         </IconButton>
       </div>
@@ -83,7 +111,11 @@ export function IsochroneCard() {
                     {loading ? (
                       <Skeleton width={56} height={14} />
                     ) : (
-                      <AnimatedNumber className={s.metricValue} value={iso?.population} format={fmtPop} />
+                      <AnimatedNumber
+                        className={s.metricValue}
+                        value={iso?.population}
+                        format={fmtPop}
+                      />
                     )}
                   </span>
                   <span className={s.metric}>

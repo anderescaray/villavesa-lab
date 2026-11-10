@@ -13,7 +13,16 @@ export interface SliderProps {
   className?: string;
 }
 
-export function Slider({ value, onChange, min, max, step = 1, label, valueText, className }: SliderProps) {
+export function Slider({
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  label,
+  valueText,
+  className,
+}: SliderProps) {
   return (
     <R.Root
       className={cx(s.root, className)}

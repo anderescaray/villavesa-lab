@@ -224,7 +224,12 @@ export function NetworkLayers() {
       ? ['case', isVisible, dim, ['==', ['get', 'route_id'], highlight], dim, 0]
       : ['case', isVisible, 0.92, 0];
     setPaint(map, ROUTE_LAYERS.line, 'line-opacity', lineOpacity);
-    setPaint(map, ROUTE_LAYERS.casing, 'line-opacity', highlight ? 0 : ['case', isVisible, 0.85, 0]);
+    setPaint(
+      map,
+      ROUTE_LAYERS.casing,
+      'line-opacity',
+      highlight ? 0 : ['case', isVisible, 0.85, 0],
+    );
     const hlFilter: FilterSpecification = ['==', ['get', 'route_id'], highlight ?? '__none__'];
     setFilter(map, ROUTE_LAYERS.hlCasing, hlFilter);
     setFilter(map, ROUTE_LAYERS.hl, hlFilter);
@@ -243,14 +248,23 @@ export function NetworkLayers() {
       'circle-stroke-color',
       route ? model.mapColor(route.id, theme) : '#000000',
     );
-    setPaint(map, ROUTE_LAYERS.stops, 'circle-opacity', route ? 0 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1]);
+    setPaint(
+      map,
+      ROUTE_LAYERS.stops,
+      'circle-opacity',
+      route ? 0 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1],
+    );
     setPaint(
       map,
       ROUTE_LAYERS.stops,
       'circle-stroke-opacity',
       route ? 0.35 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1],
     );
-    setFilter(map, ROUTE_LAYERS.stopSelected, ['==', ['get', 'stop_id'], selectedStop ?? '__none__']);
+    setFilter(map, ROUTE_LAYERS.stopSelected, [
+      '==',
+      ['get', 'stop_id'],
+      selectedStop ?? '__none__',
+    ]);
   }, [map, model, styleVersion, selected, direction, selectedStop, theme]);
 
   return null;
