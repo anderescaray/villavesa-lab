@@ -1,0 +1,7 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+# mock API fixtures are regenerated from the GTFS by `npm run fixtures` (several MB)
+mocks/fixtures/
+*.tsbuildinfo
