@@ -1,10 +1,10 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useMemo, type CSSProperties } from 'react';
 import { useApp } from '@/app/store';
-import { Badge, Button, LineBadge, MiniBarChart, SegmentedControl, Skeleton } from '@/components/ui';
+import { Button, LineBadge, MiniBarChart, SegmentedControl, Skeleton } from '@/components/ui';
 import { useClockMinute } from '@/features/time/clock';
 import { useT } from '@/i18n';
-import { formatClock, formatCurrency, formatDuration, formatMinutes, formatNumber } from '@/lib/format';
+import { displayName, formatClock, formatCurrency, formatDuration, formatMinutes, formatNumber } from '@/lib/format';
 import { boundsOf, fitBounds } from '@/map/camera';
 import { useMapContext } from '@/map/MapContext';
 import { useNetworkModel, useVehicleModel } from './model';
@@ -82,7 +82,7 @@ export function LineDetail({ routeId }: { routeId: string }) {
         <div className={s.identity}>
           <LineBadge size="lg" shortName={route.short_name} color={route.color} textColor={route.text_color} />
           <div style={{ minWidth: 0 }}>
-            <h1 className={s.name}>{route.long_name}</h1>
+            <h1 className={s.name}>{displayName(route.long_name)}</h1>
             <div className={s.sub}>
               {t(`line.kind.${route.kind}`)} · {t('line.nStops', { n: pattern.stop_ids.length })} ·{' '}
               {formatNumber(st.length_km, lang, 1)} {t('common.km')}
@@ -206,11 +206,6 @@ export function LineDetail({ routeId }: { routeId: string }) {
           })}
         </ol>
       </section>
-      {route.kind !== 'day' ? (
-        <div className={s.notice}>
-          <Badge>{t(`line.kind.${route.kind}`)}</Badge>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -116,7 +116,7 @@ function addLayers(map: MlMap, theme: Theme, anchor: string | undefined) {
       source: ROUTES_SOURCE,
       filter: ['==', ['get', 'route_id'], '__none__'],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': bg, 'line-width': width(3.2), 'line-opacity': 0.95 },
+      paint: { 'line-color': bg, 'line-width': width(2.8), 'line-opacity': 0.95 },
     },
     anchor,
   );
@@ -128,7 +128,7 @@ function addLayers(map: MlMap, theme: Theme, anchor: string | undefined) {
       source: ROUTES_SOURCE,
       filter: ['==', ['get', 'route_id'], '__none__'],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': ['get', 'color'], 'line-width': width(1.9) },
+      paint: { 'line-color': ['get', 'color'], 'line-width': width(1.6) },
     },
     anchor,
   );

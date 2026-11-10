@@ -42,7 +42,7 @@ export function SparkBars({
             height={h}
             rx={Math.min(1, bw / 2)}
             fill={color}
-            opacity={highlight === undefined || highlight === i ? 1 : 0.38}
+            opacity={highlight === undefined || highlight === i ? 1 : 0.55}
           />
         );
       })}

@@ -37,7 +37,7 @@
 }
 .band {
   display: grid;
-  grid-template-columns: 56px 1fr 1fr;
+  grid-template-columns: 64px 1fr 1fr;
   align-items: center;
   gap: var(--space-3);
   min-height: 48px;
@@ -53,6 +53,7 @@
   font-size: var(--text-13);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .swatch {
   width: 10px;
@@ -145,8 +146,6 @@
 }
 @media (max-width: 1023px) {
   .card {
-    top: auto;
-    bottom: 132px;
-    max-height: 45%;
+    max-height: calc(100% - 64px - 240px);
   }
 }

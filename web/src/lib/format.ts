@@ -113,3 +113,24 @@ export function clampIntoService(tod: number, start: number, end: number): numbe
   if (tod + 86400 >= start && tod + 86400 <= end) return tod + 86400;
   return tod < start ? start : Math.min(Math.max(tod, start), end);
 }
+
+const LOWER_WORDS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'en']);
+
+/**
+ * Display form of operator-provided names: names typed ALL IN CAPITALS in the GTFS are shown in
+ * title case (keeping Spanish particles lower-case and abbreviations like "C.C." intact). Mixed
+ * case names are returned untouched.
+ */
+export function displayName(name: string): string {
+  const letters = name.replace(/[^\p{L}]/gu, '');
+  if (!letters || letters !== letters.toUpperCase()) return name;
+  let first = true;
+  return name.replace(/[\p{L}.]+/gu, (w) => {
+    const isFirst = first;
+    first = false;
+    if (/^(\p{L}\.)+$/u.test(w)) return w;
+    const lower = w.toLocaleLowerCase('es');
+    if (!isFirst && LOWER_WORDS.has(lower)) return lower;
+    return lower.charAt(0).toLocaleUpperCase('es') + lower.slice(1);
+  });
+}

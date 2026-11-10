@@ -145,7 +145,7 @@ export default function DevGallery() {
               title="Diverging"
               items={[...DIVERGING[theme].neg, DIVERGING[theme].mid, ...[...DIVERGING[theme].pos]].map((c, i) => ({
                 color: c,
-                label: i === 0 ? 'Loses' : i === 3 ? '0' : i === 6 ? 'Gains' : ` ${i}`,
+                label: i === 0 ? 'Loses' : i === 3 ? '0' : i === 6 ? 'Gains' : '\u2009'.repeat(i),
               }))}
             />
           </div>

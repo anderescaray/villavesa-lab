@@ -35,11 +35,11 @@ function makeAtlas(): HTMLCanvasElement {
   if (!g) return c;
   const shape = (ox: number, grow: number) => {
     const cx = ox + ICON / 2;
-    const cy = ICON / 2 + 4;
-    const r = 15 + grow;
+    const cy = ICON / 2 + 5;
+    const r = 19 + grow;
     g.beginPath();
     // nose: tangent lines from the tip to the circle
-    const tipY = cy - r - 9 - grow * 0.6;
+    const tipY = cy - r - 8 - grow * 0.4;
     const a = Math.acos(r / (cy - tipY));
     const start = -Math.PI / 2 + a;
     const end = -Math.PI / 2 - a + 2 * Math.PI;
@@ -56,8 +56,8 @@ function makeAtlas(): HTMLCanvasElement {
 }
 
 const ICON_MAPPING = {
-  body: { x: 0, y: 0, width: ICON, height: ICON, anchorY: ICON / 2 + 4, mask: true },
-  halo: { x: ICON, y: 0, width: ICON, height: ICON, anchorY: ICON / 2 + 4, mask: true },
+  body: { x: 0, y: 0, width: ICON, height: ICON, anchorY: ICON / 2 + 5, mask: true },
+  halo: { x: ICON, y: 0, width: ICON, height: ICON, anchorY: ICON / 2 + 5, mask: true },
 };
 
 let atlas: HTMLCanvasElement | null = null;
@@ -122,8 +122,8 @@ function render(st: BusRenderState) {
     iconAtlas: atlas as unknown as string,
     iconMapping: ICON_MAPPING,
     sizeUnits: 'meters' as const,
-    sizeMinPixels: 11,
-    sizeMaxPixels: 26,
+    sizeMinPixels: 15,
+    sizeMaxPixels: 30,
     billboard: false,
     opacity: dim,
     parameters: { depthTest: false },
@@ -135,7 +135,7 @@ function render(st: BusRenderState) {
     id: HALO_LAYER_ID,
     data: { length: m, attributes: { getPosition: positions, getAngle: angles } },
     getIcon: () => 'halo',
-    getSize: 62,
+    getSize: 70,
     getColor: st.haloColor,
     pickable: false,
   });
@@ -151,7 +151,7 @@ function render(st: BusRenderState) {
       },
     },
     getIcon: () => 'body',
-    getSize: 62,
+    getSize: 70,
     pickable: true,
     autoHighlight: false,
     onHover: (info) => {

@@ -26,6 +26,8 @@ useApp.setState({
   ...(prefs.lang ? { lang: prefs.lang } : {}),
   ...(prefs.themePref ? { themePref: prefs.themePref } : {}),
   day: madridDayType(),
+  // tablet: the panel is an overlay drawer, so the map starts unobstructed
+  panelOpen: window.innerWidth >= 1024,
 });
 applyUrl(initial);
 const theme = resolveTheme(useApp.getState().themePref);

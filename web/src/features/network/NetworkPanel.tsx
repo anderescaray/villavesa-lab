@@ -5,7 +5,7 @@ import { useApp } from '@/app/store';
 import { Kbd, LineBadge, Skeleton, SparkBars, Stat } from '@/components/ui';
 import { useClockMinute } from '@/features/time/clock';
 import { useT } from '@/i18n';
-import { formatMinutes, formatNumber } from '@/lib/format';
+import { displayName, formatMinutes, formatNumber } from '@/lib/format';
 import { headwayAround } from '@/lib/vehicles';
 import { LineDetail } from './LineDetail';
 import { matchRoute, routeInService, useNetworkModel, useVehicleModel } from './model';
@@ -214,7 +214,7 @@ function LineRow({
       >
         <LineBadge shortName={route.short_name} color={route.color} textColor={route.text_color} />
         <span className={s.rowText}>
-          <span className={s.rowName}>{route.long_name}</span>
+          <span className={s.rowName}>{displayName(route.long_name)}</span>
           <span className={s.rowMeta}>
             {headway
               ? t('network.every', { min: formatMinutes(Math.round(headway / 60) * 60, lang) })
@@ -225,7 +225,7 @@ function LineRow({
           className={s.spark}
           values={spark}
           width={56}
-          height={16}
+          height={18}
           max={sparkMax}
           highlight={Math.floor(time / 3600) - SPARK_FROM}
           label={t('network.sparklineLabel')}

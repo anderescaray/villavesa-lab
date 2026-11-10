@@ -55,6 +55,12 @@ export function MapCanvas({ children }: { children?: ReactNode }) {
       }),
       'bottom-right',
     );
+    // keep the compact attribution collapsed to its (i) button; it expands on click
+    map.once('load', () =>
+      container.current
+        ?.querySelector('.maplibregl-ctrl-attrib')
+        ?.classList.remove('maplibregl-compact-show'),
+    );
     const overlay = new MapboxOverlay({ interleaved: false, layers: [], useDevicePixels: true });
     map.addControl(overlay);
     deckRegistry.attach(overlay);

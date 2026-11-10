@@ -95,6 +95,10 @@ export function MapInteractions() {
     const onClick = (e: MapMouseEvent) => {
       const { x, y } = e.point;
       const app = useApp.getState();
+      if (app.panelOpen && window.innerWidth < 1024) {
+        app.set({ panelOpen: false }); // overlay drawer: first tap on the map dismisses it
+        return;
+      }
       const bus = deckRegistry.pick(x, y, [BUS_LAYER_ID], 4);
       const busHover = useBusHover.getState().hover;
       if (bus && busHover) {

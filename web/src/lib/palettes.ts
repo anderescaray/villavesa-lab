@@ -13,8 +13,8 @@ export const ISO_COLORS: Record<Theme, [string, string, string]> = {
 };
 
 export const ISO_FILL_OPACITY: Record<Theme, [number, number, number]> = {
-  light: [0.26, 0.2, 0.2],
-  dark: [0.3, 0.26, 0.26],
+  light: [0.3, 0.2, 0.12],
+  dark: [0.34, 0.26, 0.2],
 };
 
 /** Sequential (magnitude) ramp for choropleths, light → dark; reserved for M7. */

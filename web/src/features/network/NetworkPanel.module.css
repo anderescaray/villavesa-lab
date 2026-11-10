@@ -195,6 +195,10 @@
 .spark {
   color: var(--text-tertiary);
 }
+.row:hover .spark,
+.row[data-hovered='true'] .spark {
+  color: var(--text-secondary);
+}
 .empty {
   padding: var(--space-8) var(--space-5);
   color: var(--text-secondary);
