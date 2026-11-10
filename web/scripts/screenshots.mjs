@@ -6,8 +6,8 @@
  *        BASE_URL=http://localhost:3000 npm run screenshots   (reuse a running server)
  *        BASEMAP=none npm run screenshots                     (offline, blank basemap)
  */
-import { spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdirSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -132,3 +132,12 @@ await shot('18-components-dark', { hash: '#/dev/components', theme: 'dark' });
 
 await browser.close();
 server?.kill();
+
+// palette-quantise to keep docs/ light (optional: needs python3 + Pillow)
+const pngs = readdirSync(out)
+  .filter((f) => f.endsWith('.png'))
+  .map((f) => resolve(out, f));
+const res = spawnSync('python3', [resolve(here, 'compress-png.py'), ...pngs], { stdio: 'ignore' });
+console.log(
+  res.status === 0 ? 'compressed PNGs' : 'PNG compression skipped (python3 + Pillow not found)',
+);

@@ -48,7 +48,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "NPY", "RUF"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["engine/src/vlab"]
+files = ["engine/src/vlab", "api/src/vlab_api"]
 strict = true
 ignore_missing_imports = true
 disallow_untyped_decorators = false

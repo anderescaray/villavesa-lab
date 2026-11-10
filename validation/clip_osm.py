@@ -1,5 +1,6 @@
 """Clip the Navarra OSM extract to the study area (+ margin) with pyosmium's
 extract-by-bbox of a buffered study-area polygon. Output: validation/work/study.osm.pbf."""
+
 from __future__ import annotations
 
 import json
@@ -7,7 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import numpy as np
 from pyproj import Transformer
 from shapely.geometry import mapping, shape
 from shapely.ops import transform
@@ -28,9 +28,23 @@ def main() -> None:
     poly.write_text(json.dumps({"type": "Feature", "properties": {}, "geometry": mapping(buf)}))
     src = REPO / "data/raw/osm/navarra-latest.osm.pbf"
     out = work / "study.osm.pbf"
-    subprocess.run(["osmium", "extract", "-p", str(poly), "-s", "complete_ways", "--overwrite",
-                    "-o", str(out), str(src)], check=True)
+    subprocess.run(
+        [
+            "osmium",
+            "extract",
+            "-p",
+            str(poly),
+            "-s",
+            "complete_ways",
+            "--overwrite",
+            "-o",
+            str(out),
+            str(src),
+        ],
+        check=True,
+    )
     print(out, out.stat().st_size)
+
 
 if __name__ == "__main__":
     sys.exit(main())

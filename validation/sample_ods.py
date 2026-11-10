@@ -8,6 +8,7 @@ Output: validation/results/ods.csv (fixed seed => identical on every run).
 * stop pairs: two distinct GTFS stops drawn uniformly, rejecting pairs closer than 500 m.
 * each pair gets one departure time from 08:00, 08:20, 08:40, 12:00 on 2026-11-11.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -39,9 +40,18 @@ def main() -> None:
         dist = float(np.hypot(zx[o] - zx[d], zy[o] - zy[d]))
         if o == d or dist < MIN_DIST_M:
             continue
-        rows.append(dict(kind="zone", o_id=int(z["zone_id"][o]), d_id=int(z["zone_id"][d]),
-                         o_lon=z["lon"][o], o_lat=z["lat"][o], d_lon=z["lon"][d],
-                         d_lat=z["lat"][d], straight_m=dist))
+        rows.append(
+            dict(
+                kind="zone",
+                o_id=int(z["zone_id"][o]),
+                d_id=int(z["zone_id"][d]),
+                o_lon=z["lon"][o],
+                o_lat=z["lat"][o],
+                d_lon=z["lon"][d],
+                d_lat=z["lat"][d],
+                straight_m=dist,
+            )
+        )
     feed = load_feed(REPO / "data/raw/gtfs_tuc_pamplona.zip")
     tt = build_timetable(feed, __import__("datetime").date(2026, 11, 11))
     sx, sy = tt.stop_x, tt.stop_y
@@ -51,9 +61,18 @@ def main() -> None:
         dist = float(np.hypot(sx[o] - sx[d], sy[o] - sy[d]))
         if dist < MIN_DIST_M:
             continue
-        rows.append(dict(kind="stop", o_id=int(o), d_id=int(d), o_lon=tt.stop_lon[o],
-                         o_lat=tt.stop_lat[o], d_lon=tt.stop_lon[d], d_lat=tt.stop_lat[d],
-                         straight_m=dist))
+        rows.append(
+            dict(
+                kind="stop",
+                o_id=int(o),
+                d_id=int(d),
+                o_lon=tt.stop_lon[o],
+                o_lat=tt.stop_lat[o],
+                d_lon=tt.stop_lon[d],
+                d_lat=tt.stop_lat[d],
+                straight_m=dist,
+            )
+        )
         n_stop += 1
     df = pd.DataFrame(rows)
     df.insert(0, "od", np.arange(len(df)))

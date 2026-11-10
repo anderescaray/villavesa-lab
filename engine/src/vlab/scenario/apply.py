@@ -75,8 +75,15 @@ class SnappedPath:
 # ====================================================================== public API
 
 
-def apply(model: Model, day: str, edits: tuple[Edit, ...]) -> ScenarioNetwork:
-    """Apply ``edits`` in order to the baseline of ``day``."""
+def apply(
+    model: Model, day: str, edits: tuple[Edit, ...], *, strict: bool = True
+) -> ScenarioNetwork:
+    """Apply ``edits`` in order to the baseline of ``day``.
+
+    With ``strict=False`` an edit that cannot be applied on this day type (e.g.
+    a headway change on a line that does not run on Sundays) is skipped with a
+    warning instead of raising; used to cost a scenario on every day type.
+    """
     base = model.baseline(day)
     log = ChangeLog()
     if not edits:
@@ -84,31 +91,44 @@ def apply(model: Model, day: str, edits: tuple[Edit, ...]) -> ScenarioNetwork:
     tt = base.timetable
     stops_changed = False
     for e in edits:
-        if isinstance(e, SetHeadway | ScaleFrequency):
-            tt = _frequency(tt, e, log)
-        elif isinstance(e, SpeedUp):
-            tt = _speed_up(tt, e, log)
-        elif isinstance(e, RemoveStop):
-            tt = _remove_stop(tt, e, log)
-        elif isinstance(e, MoveStop):
-            tt = _move_stop(tt, e, log)
-            stops_changed = True
-        elif isinstance(e, AddStop):
-            tt = _add_stop(tt, e, log)
-            stops_changed = True
-        elif isinstance(e, RemoveRoute):
-            tt = _remove_route(tt, e, log)
-        elif isinstance(e, AddRoute):
-            n_before = tt.n_stops
-            tt = _add_route(model, tt, e, log, _default_speed(model))
-            stops_changed |= tt.n_stops != n_before
-        else:  # pragma: no cover - exhaustive
-            raise ScenarioError(f"unsupported edit {e!r}")
+        try:
+            tt, changed = _apply_one(model, tt, e, log)
+        except ScenarioError as exc:
+            if strict:
+                raise
+            log.warnings.append(f"{day}: {exc}")
+            continue
+        stops_changed |= changed
     if stops_changed:
         state = model.state_for(tt)
     else:
         state = NetworkState(tt, base.transfers, base.access, base.egress)
     return ScenarioNetwork(state, log)
+
+
+def _apply_one(model: Model, tt: Timetable, e: Edit, log: ChangeLog) -> tuple[Timetable, bool]:
+    stops_changed = False
+    if isinstance(e, SetHeadway | ScaleFrequency):
+        tt = _frequency(tt, e, log)
+    elif isinstance(e, SpeedUp):
+        tt = _speed_up(tt, e, log)
+    elif isinstance(e, RemoveStop):
+        tt = _remove_stop(tt, e, log)
+    elif isinstance(e, MoveStop):
+        tt = _move_stop(tt, e, log)
+        stops_changed = True
+    elif isinstance(e, AddStop):
+        tt = _add_stop(tt, e, log)
+        stops_changed = True
+    elif isinstance(e, RemoveRoute):
+        tt = _remove_route(tt, e, log)
+    elif isinstance(e, AddRoute):
+        n_before = tt.n_stops
+        tt = _add_route(model, tt, e, log, _default_speed(model))
+        stops_changed |= tt.n_stops != n_before
+    else:  # pragma: no cover - exhaustive
+        raise ScenarioError(f"unsupported edit {e!r}")
+    return tt, stops_changed
 
 
 def snap_path(graph: WalkGraph, waypoints: npt.ArrayLike) -> SnappedPath:
@@ -255,11 +275,11 @@ def _retime_group(
     """Replace the selected own-day trips of the patterns of one direction by
     ``n_new`` trips, in place.
 
-    The combined start times of the direction are resampled together, so the
-    combined headway stays regular; each new trip copies the pattern and the
-    running times of the old trip closest in departure time (short-turn
-    variants therefore keep their share and their time of day), and a later bus
-    never overtakes an earlier one of the same pattern (it is held).
+    The start times are resampled over the same span with the same time-of-day
+    density; each new trip copies the running times of the old trip closest in
+    departure time, and a later bus never overtakes an earlier one of the same
+    pattern (it is held). Called once per pattern so that every branch keeps
+    its own regular spacing.
     """
     old_t = np.concatenate(
         [blocks[i].dep[sel, 0].astype(np.int64) for i, sel in zip(group, sels, strict=True)]
@@ -346,8 +366,17 @@ def _frequency(tt: Timetable, e: SetHeadway | ScaleFrequency, log: ChangeLog) ->
             target = max(1, round(total * factor)) if factor > 0 else 0
             if target == total:
                 continue
-            _retime_group(blocks, group, sels, target)
-            changed.update(i for i, sel in zip(group, sels, strict=True) if sel.any())
+            # largest-remainder split of the target between the direction's patterns,
+            # so branches and short-turn variants keep their share of the service
+            counts = np.array([int(sel.sum()) for sel in sels])
+            raw = counts * (target / total)
+            alloc = np.floor(raw).astype(int)
+            for j in np.argsort(-(raw - alloc), kind="stable")[: target - int(alloc.sum())]:
+                alloc[j] += 1
+            for i, sel, n_new in zip(group, sels, alloc, strict=True):
+                if sel.any() and int(n_new) != int(sel.sum()):
+                    _retime_group(blocks, [i], [sel], int(n_new))
+                    changed.add(i)
     if not changed:
         log.warnings.append(f"route {e.route_id}: frequency change had no effect")
         return tt

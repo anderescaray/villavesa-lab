@@ -27,6 +27,12 @@ export function Dialog({
         <R.Overlay className={s.overlay} />
         <R.Content
           className={s.content}
+          tabIndex={-1}
+          onOpenAutoFocus={(e) => {
+            // focus the dialog itself, not the close button (no stray focus ring on open)
+            e.preventDefault();
+            (e.currentTarget as HTMLElement | null)?.focus();
+          }}
           {...(description ? {} : { 'aria-describedby': undefined })}
         >
           <div className={s.header}>

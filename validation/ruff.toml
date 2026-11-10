@@ -1,0 +1,5 @@
+# Throw-away reference-comparison scripts: keep the project's rules, relax style-only ones.
+extend = "../pyproject.toml"
+
+[lint]
+extend-ignore = ["E501", "E731", "E741", "SIM115", "B007", "B905"]

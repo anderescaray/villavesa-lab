@@ -1,0 +1,10 @@
+{
+  "routingDefaults": {
+    "walk": { "speed": 1.25, "reluctance": 1.0, "boardCost": 0, "stairsReluctance": 1.0, "safetyFactor": 0.0 },
+    "boardSlack": "60s",
+    "alightSlack": "0s",
+    "transferSlack": "0s",
+    "transferPenalty": 0,
+    "waitReluctance": 1.0
+  }
+}
