@@ -79,13 +79,11 @@ def _monotone_dp(cost: npt.NDArray[np.float64]) -> npt.NDArray[np.int64]:  # pra
     return choice
 
 
-def project_monotone(
-    line_x: F64, line_y: F64, pts_x: F64, pts_y: F64
-) -> tuple[F64, F64]:
+def project_monotone(line_x: F64, line_y: F64, pts_x: F64, pts_y: F64) -> tuple[F64, F64]:
     """Project an ordered sequence of points onto a polyline, monotonically.
 
     Each point's projection is constrained to lie at or after the previous one along the
-    line; among all monotone assignments the one minimising the sum of point–line
+    line; among all monotone assignments the one minimising the sum of point-line
     distances is chosen (dynamic programming over segments). This is robust to loops,
     out-and-back shapes and self-overlapping lines, where a greedy nearest-segment
     projection jumps to the wrong pass.
@@ -97,7 +95,9 @@ def project_monotone(
     n_pts = len(pts_x)
     cum = cumulative_length(line_x, line_y)
     if len(line_x) < 2 or n_pts == 0:
-        d = np.hypot(pts_x - (line_x[0] if len(line_x) else 0.0), pts_y - (line_y[0] if len(line_y) else 0.0))
+        d = np.hypot(
+            pts_x - (line_x[0] if len(line_x) else 0.0), pts_y - (line_y[0] if len(line_y) else 0.0)
+        )
         return np.zeros(n_pts), d
     ax, ay = line_x[:-1], line_y[:-1]
     dx, dy = np.diff(line_x), np.diff(line_y)

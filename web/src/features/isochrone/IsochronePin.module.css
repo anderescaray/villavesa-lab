@@ -1,0 +1,52 @@
+.pin {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+.dot {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 2.5px var(--bg),
+    0 1px 6px rgba(0, 0, 0, 0.35);
+  animation: drop var(--dur-slow) var(--ease-out);
+}
+.pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: pulse 900ms var(--ease-out) 1;
+}
+.drop .dot {
+  animation: drop var(--dur-slow) var(--ease-out);
+}
+.drop .pulse {
+  animation: pulse 900ms var(--ease-out) 1;
+}
+@keyframes drop {
+  from {
+    transform: translateY(-8px) scale(0.6);
+    opacity: 0;
+  }
+}
+@keyframes pulse {
+  from {
+    transform: scale(0.6);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot,
+  .pulse {
+    animation: none;
+  }
+}

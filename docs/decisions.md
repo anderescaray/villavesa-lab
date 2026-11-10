@@ -66,3 +66,30 @@ Each entry: context → options → choice → why.
   complete and green, and is squash-merged, so `main` history stays one commit
   per milestone. The branch is never force-pushed: after a squash merge, `main`
   is merged back into the branch instead.
+
+## D-008 Data sources actually used (see `docs/data.md` for detail)
+
+- **Floor area from the cadastre**: OSM has `building:levels` for only ~12% of
+  footprint area, so floor area comes from the official Navarra cadastre building
+  volumes (IDENA, CC BY 4.0). OSM tags/land use still decide residential vs not.
+- **Population and income from the same INE table family** (household income
+  atlas, 2024 data on 2025 section boundaries): one consistent set of section
+  codes; the 2024 boundaries mismatched two sections.
+- **POIs prefer official registers** (Navarra health service, education
+  department, IDENA industrial estates) over OSM, which is used for
+  universities, supermarkets and the city centre. One manual rule: Clínica
+  Arcángel San Miguel is excluded from `hospital` (psychiatric clinic, not a
+  general hospital).
+- **Extra bundle files**: `zone_sections.parquet` (cells spanning several
+  sections) and `drive_graph.npz` (bus-drivable streets, because the pedestrian
+  graph is the wrong network to snap new bus lines to).
+
+## D-009 Cost model parameters
+
+- **Choice**: operating cost = 43.15 EUR per bus-hour + 1.25 EUR per km (the
+  two-part tariff the operator was actually paid on, 2023 prices, MCP X Plan
+  2023), capital = 25,300 EUR per bus-year (contract amortisation + financing /
+  159 buses). All three are editable parameters, surfaced with their source.
+- **Why**: these are sourced figures (`docs/reference_facts.md`), not guesses.
+  Caveat: they belong to the pre-2024 concession; the new contract's unit prices
+  are not public.

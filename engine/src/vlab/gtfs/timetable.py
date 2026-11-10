@@ -11,7 +11,7 @@ Layout (``P`` patterns, ``S`` stops, ``T`` trips)::
     pattern_stops_ptr[P+1]  → pattern_stops[...]      (stop idx, in visiting order)
                               pattern_stop_offset_m    (metres along the shape, aligned)
     pattern_trips_ptr[P+1]  → trip rows (global trip idx) trip_source[T], trip_prev_day[T]
-    pattern_times_ptr[P+1]  → arr[...], dep[...]       (int32 s, block n_t × n_s)
+    pattern_times_ptr[P+1]  → arr[...], dep[...]       (int32 s, block n_t x n_s)
     stop_patterns_ptr[S+1]  → stop_patterns, stop_patterns_pos  (each occurrence)
 
 Times are seconds since midnight of the service date (may exceed 86400; trips carried
@@ -180,6 +180,30 @@ class Timetable:
         a, b = self.shape_ptr[shape_idx], self.shape_ptr[shape_idx + 1]
         return np.column_stack([self.shape_lon[a:b], self.shape_lat[a:b]])
 
+    def pattern_path(self, p: int, from_pos: int = 0, to_pos: int | None = None) -> F64:
+        """``[n, 2]`` lon/lat polyline of pattern ``p`` between two stop positions.
+
+        Follows the pattern's shape between the stops' offsets (endpoints interpolated);
+        patterns without a shape get straight segments between stops.
+        """
+        seq = self.pattern_stop_seq(p)
+        b = len(seq) - 1 if to_pos is None else int(to_pos)
+        a = int(from_pos)
+        si = self.patterns[p].shape_idx
+        if si < 0:
+            s = seq[a : b + 1]
+            return np.column_stack([self.stop_lon[s], self.stop_lat[s]])
+        off = self.pattern_offsets(p)
+        oa, ob = float(off[a]), float(off[b])
+        lo, hi = self.shape_ptr[si], self.shape_ptr[si + 1]
+        cum = self.shape_cum_m[lo:hi]
+        lon = self.shape_lon[lo:hi]
+        lat = self.shape_lat[lo:hi]
+        inner = (cum > oa) & (cum < ob)
+        start = [np.interp(oa, cum, lon), np.interp(oa, cum, lat)]
+        end = [np.interp(ob, cum, lon), np.interp(ob, cum, lat)]
+        return np.vstack([start, np.column_stack([lon[inner], lat[inner]]), end])
+
     def raptor_arrays(self) -> tuple[I32, I32, I32, I64, I32, I32, I32, I32, I32]:
         """The arrays the numba kernels consume, in kernel argument order."""
         return (
@@ -198,7 +222,7 @@ class Timetable:
 # ============================================================================ assembly
 
 
-def _ro(a: np.ndarray) -> np.ndarray:  # type: ignore[type-arg]
+def _ro(a: np.ndarray) -> np.ndarray:
     a = np.ascontiguousarray(a)
     if a.flags.writeable and a.base is None:
         a.setflags(write=False)
@@ -358,7 +382,14 @@ def assemble(
     stop_ids, stop_names, slon, slat, sx, sy = (
         stops
         if stops is not None
-        else (base.stop_ids, base.stop_names, base.stop_lon, base.stop_lat, base.stop_x, base.stop_y)
+        else (
+            base.stop_ids,
+            base.stop_names,
+            base.stop_lon,
+            base.stop_lat,
+            base.stop_x,
+            base.stop_y,
+        )
     )
     routes = routes if routes is not None else base.routes
     n_stops = len(stop_ids)
@@ -380,7 +411,7 @@ def assemble(
     tm_ptr = np.zeros(len(blocks) + 1, dtype=np.int64)
     np.cumsum(n_s * n_t, out=tm_ptr[1:])
 
-    def cat(parts: list[np.ndarray], dtype: type) -> np.ndarray:  # type: ignore[type-arg]
+    def cat(parts: list[np.ndarray], dtype: type) -> np.ndarray:
         return np.concatenate(parts).astype(dtype, copy=False) if parts else np.zeros(0, dtype)
 
     pattern_stops = cat([np.asarray(b.stops) for b in blocks], np.int32)
@@ -469,7 +500,7 @@ def build_timetable(
         feed: validated feed.
         date: service date.
         overnight: also include trips of the previous service day that run past
-            midnight (times ≥ 24:00), shifted by −24 h and flagged in ``trip_prev_day``
+            midnight (times ≥ 24:00), shifted by -24 h and flagged in ``trip_prev_day``
             (so a 00:30 query sees the night buses that left at 23:50 "yesterday").
         max_stop_shape_m: stops farther than this from their pattern's shape are
             reported in ``extra["shape_warnings"]``.
@@ -486,8 +517,7 @@ def build_timetable(
     if overnight:
         prev_mask = trips_mask(feed, d - dt.timedelta(days=1))
         last_arr = st_arr[ptr[1:] - 1]
-        for t in np.flatnonzero(prev_mask & (last_arr >= DAY_S)):
-            selected.append((int(t), True))
+        selected.extend((int(t), True) for t in np.flatnonzero(prev_mask & (last_arr >= DAY_S)))
 
     route_ids = feed.trips["route_id"].to_numpy()
     directions = feed.trips["direction_id"].to_numpy()
@@ -513,7 +543,7 @@ def build_timetable(
                     color="#" + str(row.route_color),
                     text_color="#" + str(row.route_text_color),
                     kind=kinds[str(row.route_id)],
-                    route_type=int(row.route_type),
+                    route_type=int(str(row.route_type)),
                 )
             )
     routes.sort(key=lambda r: (_route_sort_key(r.short_name), r.route_id))
@@ -552,13 +582,13 @@ def build_timetable(
     for (rid, direction, stop_seq), members in ordered:
         n = per_route_dir[(rid, direction)]
         per_route_dir[(rid, direction)] += 1
-        key = f"{rid}:{direction}:{n}"
+        pkey = f"{rid}:{direction}:{n}"
         tids = np.array([t for t, _ in members], dtype=np.int64)
-        prev = np.array([p for _, p in members], dtype=np.bool_)
+        prev_flags = np.array([p for _, p in members], dtype=np.bool_)
         idx = ptr[tids][:, None] + np.arange(len(stop_seq))[None, :]
         arr = st_arr[idx].astype(np.int32)
         dep = st_dep[idx].astype(np.int32)
-        shift = np.where(prev, DAY_S, 0).astype(np.int32)[:, None]
+        shift = np.where(prev_flags, DAY_S, 0).astype(np.int32)[:, None]
         arr, dep = arr - shift, dep - shift
         shape_id = Counter(str(shape_of[t]) for t in tids).most_common(1)[0][0]
         headsign = Counter(str(headsigns[t]) for t in tids).most_common(1)[0][0]
@@ -568,19 +598,19 @@ def build_timetable(
             a, b = shape_ptr[si], shape_ptr[si + 1]
             off, dist = project_monotone(shx[a:b], shy[a:b], sx[stops_arr], sy[stops_arr])
             if dist.max() > max_stop_shape_m:
-                warnings.append(f"{key}: stop {dist.argmax()} is {dist.max():.0f} m from shape")
+                warnings.append(f"{pkey}: stop {dist.argmax()} is {dist.max():.0f} m from shape")
         else:
             si = -1
             off = cumulative_length(sx[stops_arr], sy[stops_arr])
         blocks.append(
             PatternBlock(
-                info=PatternInfo(key, r_index[rid], direction, headsign, si),
+                info=PatternInfo(pkey, r_index[rid], direction, headsign, si),
                 stops=stops_arr,
                 arr=arr,
                 dep=dep,
                 offsets=off,
                 trip_source=tids.astype(np.int32),
-                trip_prev_day=prev,
+                trip_prev_day=prev_flags,
             )
         )
 
@@ -618,6 +648,137 @@ def build_timetable(
     n_split = sum(1 for p in tt.patterns if p.parent)
     tt.extra["fifo_splits"] = n_split
     return tt
+
+
+def validate_timetable(tt: Timetable) -> None:
+    """Check every structural invariant RAPTOR relies on; raise ``ValueError`` if broken.
+
+    O(total stop-times); meant for tests and for checking scenario edits.
+    """
+
+    def need(cond: bool, msg: str) -> None:
+        if not cond:
+            raise ValueError(f"invalid timetable: {msg}")
+
+    n_pat, n_stops = tt.n_patterns, tt.n_stops
+    need(len(tt.pattern_stops_ptr) == n_pat + 1, "pattern_stops_ptr size")
+    need(len(tt.pattern_trips_ptr) == n_pat + 1, "pattern_trips_ptr size")
+    need(len(tt.pattern_route) == n_pat, "pattern_route size")
+    need(
+        tt.pattern_stops_ptr[-1] == len(tt.pattern_stops) == len(tt.pattern_stop_offset_m),
+        "pattern stop arrays size",
+    )
+    need(tt.pattern_times_ptr[-1] == len(tt.arr) == len(tt.dep), "time arrays size")
+    need(len(tt.trip_source) == len(tt.trip_prev_day) == tt.n_trips, "trip arrays size")
+    need(len(tt.stop_lon) == len(tt.stop_x) == n_stops, "stop arrays size")
+    need(len({p.key for p in tt.patterns}) == n_pat, "duplicate pattern keys")
+    for p in range(n_pat):
+        key = tt.patterns[p].key
+        seq = tt.pattern_stop_seq(p)
+        n_t = tt.n_pattern_trips(p)
+        need(len(seq) >= 2, f"{key}: fewer than 2 stops")
+        need(bool(np.all((seq >= 0) & (seq < n_stops))), f"{key}: stop index out of range")
+        need(
+            tt.pattern_times_ptr[p + 1] - tt.pattern_times_ptr[p] == n_t * len(seq),
+            f"{key}: time block size",
+        )
+        arr, dep = tt.arrivals(p), tt.departures(p)
+        need(is_fifo(arr, dep), f"{key}: trips overtake (not FIFO)")
+        need(bool(np.all(dep >= arr)), f"{key}: departure before arrival")
+        need(bool(np.all(arr[:, 1:] >= dep[:, :-1])), f"{key}: time decreases along a trip")
+        need(bool(np.all(np.diff(tt.pattern_offsets(p)) >= 0)), f"{key}: offsets decrease")
+        need(0 <= tt.patterns[p].route_idx < tt.n_routes, f"{key}: route index")
+        need(tt.pattern_route[p] == tt.patterns[p].route_idx, f"{key}: pattern_route mismatch")
+    ptr, pat, pos = stop_pattern_index(n_stops, tt.pattern_stops_ptr, tt.pattern_stops)
+    need(np.array_equal(ptr, tt.stop_patterns_ptr), "stop→pattern pointer")
+    need(np.array_equal(pat, tt.stop_patterns), "stop→pattern index")
+    need(np.array_equal(pos, tt.stop_patterns_pos), "stop→pattern positions")
+
+
+def empty_timetable(
+    stop_ids: Sequence[str],
+    lon: npt.ArrayLike,
+    lat: npt.ArrayLike,
+    routes: Sequence[RouteInfo] = (),
+    *,
+    names: Sequence[str] | None = None,
+    date: dt.date | None = None,
+) -> Timetable:
+    """A timetable with stops and routes but no patterns (base for :func:`assemble`)."""
+    lon_a = np.asarray(lon, dtype=np.float64)
+    lat_a = np.asarray(lat, dtype=np.float64)
+    x, y = to_xy(lon_a, lat_a)
+    return Timetable(
+        date=date,
+        stop_ids=tuple(str(s) for s in stop_ids),
+        stop_names=tuple(names) if names is not None else tuple(str(s) for s in stop_ids),
+        stop_lon=_ro(lon_a),
+        stop_lat=_ro(lat_a),
+        stop_x=_ro(x),
+        stop_y=_ro(y),
+        routes=tuple(routes),
+        patterns=(),
+        pattern_route=np.zeros(0, np.int32),
+        pattern_stops_ptr=np.zeros(1, np.int32),
+        pattern_stops=np.zeros(0, np.int32),
+        pattern_stop_offset_m=np.zeros(0),
+        pattern_trips_ptr=np.zeros(1, np.int32),
+        pattern_times_ptr=np.zeros(1, np.int64),
+        arr=np.zeros(0, np.int32),
+        dep=np.zeros(0, np.int32),
+        trip_source=np.zeros(0, np.int32),
+        trip_prev_day=np.zeros(0, np.bool_),
+        stop_patterns_ptr=np.zeros(len(stop_ids) + 1, np.int32),
+        stop_patterns=np.zeros(0, np.int32),
+        stop_patterns_pos=np.zeros(0, np.int32),
+        shape_ids=(),
+        shape_ptr=np.zeros(1, np.int32),
+        shape_lon=np.zeros(0),
+        shape_lat=np.zeros(0),
+        shape_cum_m=np.zeros(0),
+    )
+
+
+def synthetic_timetable(
+    lon: npt.ArrayLike,
+    lat: npt.ArrayLike,
+    patterns: Sequence[tuple[Sequence[int], npt.ArrayLike, npt.ArrayLike | None]],
+    *,
+    stop_ids: Sequence[str] | None = None,
+    route_of_pattern: Sequence[int] | None = None,
+) -> Timetable:
+    """Timetable from plain arrays: ``patterns`` = ``[(stop_seq, arr, dep|None), ...]``
+    with ``arr``/``dep`` ``[n_trips, n_stops]``. One route per pattern unless
+    ``route_of_pattern`` is given. Overtaking patterns are FIFO-split. For tests and
+    hand-built networks."""
+    lon_a = np.asarray(lon, dtype=np.float64)
+    n_routes = 1 + max(route_of_pattern) if route_of_pattern else len(patterns)
+    routes = [
+        RouteInfo(str(r), f"R{r}", f"Route {r}", "#808080", "#FFFFFF", "day")
+        for r in range(n_routes)
+    ]
+    ids = stop_ids if stop_ids is not None else [str(i) for i in range(len(lon_a))]
+    base = empty_timetable(ids, lon_a, lat, routes)
+    blocks = []
+    for i, (seq, a, d) in enumerate(patterns):
+        s = np.asarray(seq, dtype=np.int32)
+        arr = np.atleast_2d(np.asarray(a, dtype=np.int32)).reshape(-1, len(s))
+        dep = (
+            arr.copy() if d is None else np.atleast_2d(np.asarray(d, np.int32)).reshape(-1, len(s))
+        )
+        r = route_of_pattern[i] if route_of_pattern else i
+        blocks.append(
+            PatternBlock(
+                PatternInfo(f"{r}:0:{i}", r, 0, f"P{i}", -1),
+                s,
+                arr,
+                dep,
+                cumulative_length(base.stop_x[s], base.stop_y[s]),
+                np.full(arr.shape[0], -1, np.int32),
+                np.zeros(arr.shape[0], np.bool_),
+            )
+        )
+    return assemble(base, blocks)
 
 
 def _route_sort_key(short_name: str) -> tuple[str, int, str]:

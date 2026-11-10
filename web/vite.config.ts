@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type PluginOption } from 'vite';
 import { mockApi } from './mocks/mock-api';
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins,
+    resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     server: { port: 3000, strictPort: true, host: true, proxy },
     preview: { port: 3000, strictPort: true, host: true, proxy },
     build: {

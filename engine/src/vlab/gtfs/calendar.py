@@ -54,9 +54,11 @@ def trips_mask(feed: Feed, date: dt.date | str | int) -> npt.NDArray[np.bool_]:
 def service_dates(feed: Feed) -> list[dt.date]:
     """All dates with at least one active service, sorted."""
     candidates: set[int] = set(feed.calendar_dates["date"].tolist())
-    for row in feed.calendar.itertuples(index=False):
-        d = to_date(int(row.start_date))
-        end = to_date(int(row.end_date))
+    starts = feed.calendar["start_date"].tolist()
+    ends = feed.calendar["end_date"].tolist()
+    for start, stop in zip(starts, ends, strict=True):
+        d = to_date(int(start))
+        end = to_date(int(stop))
         while d <= end:
             candidates.add(_ymd(d))
             d += dt.timedelta(days=1)
@@ -73,7 +75,7 @@ def trip_counts(feed: Feed) -> dict[dt.date, int]:
 def classify_dates(feed: Feed) -> dict[dt.date, DayType]:
     """Day type of each service date.
 
-    Calendar weekday gives ``weekday``/``saturday``/``sunday``. A Monday–Saturday date is
+    Calendar weekday gives ``weekday``/``saturday``/``sunday``. A Monday-Saturday date is
     re-labelled ``holiday`` when its trip count is closer to the modal Sunday count than
     to the modal count of its own calendar type (a holiday timetable).
     """

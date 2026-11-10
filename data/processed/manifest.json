@@ -1,0 +1,218 @@
+{
+  "generated": "2026-11-10T22:44:21Z",
+  "generator": "scripts/build_data.py",
+  "parameters": {
+    "study_area_buffer_m": 1500.0,
+    "cell_size_m": 200,
+    "max_walk_edge_m": 60.0,
+    "section_simplify_m": 2.0,
+    "adrh_year": 2024
+  },
+  "sources": [
+    {
+      "key": "gtfs",
+      "file": "data/raw/gtfs_tuc_pamplona.zip",
+      "urls": [],
+      "landing_page": "https://nap.transportes.gob.es/Files/Detail/1177",
+      "licence": "Open data, National Access Point for multimodal transport (NAP Spain)",
+      "description": "Official GTFS of TUC Pamplona (Mancomunidad de la Comarca de Pamplona)",
+      "reference": "service 2026-11-10 to 2026-11-30",
+      "retrieved": "2026-11-10",
+      "bytes": 13442104,
+      "sha256": "fe3936b3069eae6b7b0153fe1df7f7ab4c186500c461132f7f19df43e9ef791b"
+    },
+    {
+      "key": "osm",
+      "file": "data/raw/osm/navarra-latest.osm.pbf",
+      "urls": [
+        "https://download.openstreetmap.fr/extracts/europe/spain/comunidad_foral_de_navarra-latest.osm.pbf",
+        "https://download.geofabrik.de/europe/spain/navarra-latest.osm.pbf"
+      ],
+      "landing_page": "https://download.openstreetmap.fr/extracts/europe/spain/",
+      "licence": "ODbL 1.0 (c) OpenStreetMap contributors",
+      "description": "OpenStreetMap extract of the Comunidad Foral de Navarra",
+      "reference": "daily extract, retrieval date",
+      "retrieved": "2026-11-10",
+      "bytes": 44774501,
+      "sha256": "0910410f2314ad05282d3b71d03ad5634e962efa3f27db1a9ae29bb9a5bb5201"
+    },
+    {
+      "key": "ine_sections",
+      "file": "data/raw/ine/seccionado_2025.zip",
+      "urls": [
+        "https://www.ine.es/prodyser/cartografia/seccionado_2025.zip"
+      ],
+      "landing_page": "https://www.ine.es/ss/Satellite?c=Page&cid=1259952026632&pagename=ProductosYServicios%2FPYSLayout",
+      "licence": "INE terms of use: free reuse citing INE as the source (ine.es Aviso legal)",
+      "description": "INE census-section boundaries (seccionado) at 2025-01-01, ETRS89 UTM30",
+      "reference": "2025-01-01",
+      "retrieved": "2026-11-10",
+      "bytes": 60298555,
+      "sha256": "55c9da7e34d3bb3cb725400c35b58e72f4db2ea8321ef91237a89e708d2dbcc4"
+    },
+    {
+      "key": "ine_adrh_income",
+      "file": "data/raw/ine/adrh_navarra_income_31124.csv",
+      "urls": [
+        "https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/31124.csv"
+      ],
+      "landing_page": "https://www.ine.es/jaxiT3/Tabla.htm?t=31124",
+      "licence": "INE terms of use: free reuse citing INE as the source (ine.es Aviso legal)",
+      "description": "INE Atlas de distribucion de renta de los hogares (ADRH), Navarra: mean and median income indicators by municipality, district and section (table 31124)",
+      "reference": "income year 2024 (sections as of 2025-01-01)",
+      "retrieved": "2026-11-10",
+      "bytes": 7615636,
+      "sha256": "05272c2fd91facf21ce8d8dde518e87a37964c3e7aa411df40d723cf8449b733"
+    },
+    {
+      "key": "ine_adrh_demography",
+      "file": "data/raw/ine/adrh_navarra_demography_31132.csv",
+      "urls": [
+        "https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/31132.csv"
+      ],
+      "landing_page": "https://www.ine.es/jaxiT3/Tabla.htm?t=31132",
+      "licence": "INE terms of use: free reuse citing INE as the source (ine.es Aviso legal)",
+      "description": "INE ADRH, Navarra: demographic indicators by section, including resident population (table 31132)",
+      "reference": "2024 (sections as of 2025-01-01)",
+      "retrieved": "2026-11-10",
+      "bytes": 8785779,
+      "sha256": "87b692b9c29c4b36ef2fe95e40f578222935ce14d47a345287b5429b66e1e53e"
+    },
+    {
+      "key": "idena_buildings",
+      "file": "data/raw/idena/CATAST_Pol_Edificacion.zip",
+      "urls": [
+        "https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_1_SHAPEFILE/CATAST_Pol_Edificacion.zip"
+      ],
+      "landing_page": "https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/",
+      "licence": "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required",
+      "description": "Registro de la Riqueza Territorial de Navarra (foral cadastre): building volume footprints (CATAST_Pol_Edificacion)",
+      "reference": "cadastre extract published by IDENA (see BEGINLIFE dates)",
+      "retrieved": "2026-11-10",
+      "bytes": 36600480,
+      "sha256": "b68073306b40555099150406d8175869a4c05ae05125a5903fa77fef4bc519d4"
+    },
+    {
+      "key": "idena_building_heights",
+      "file": "data/raw/idena/CATAST_Txt_EdifAlturas.zip",
+      "urls": [
+        "https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_1_SHAPEFILE/CATAST_Txt_EdifAlturas.zip"
+      ],
+      "landing_page": "https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/",
+      "licence": "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required",
+      "description": "Foral cadastre: height labels of each building volume, floors above and below ground (CATAST_Txt_EdifAlturas)",
+      "reference": "cadastre extract published by IDENA",
+      "retrieved": "2026-11-10",
+      "bytes": 9837379,
+      "sha256": "190161a601c42a58f383a31a9701be8f8fed0904426076806a637a90c4438510"
+    },
+    {
+      "key": "idena_health_primary",
+      "file": "data/raw/idena/DOTACI_Sym_SNSPrimaria.geojson",
+      "urls": [
+        "https://idena.navarra.es/ogc/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=IDENA:DOTACI_Sym_SNSPrimaria&outputFormat=application/json&count=5000"
+      ],
+      "landing_page": "https://idena.navarra.es/",
+      "licence": "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required",
+      "description": "Servicio Navarro de Salud: primary-care centres (centros de salud, consultorios) (IDENA WFS layer DOTACI_Sym_SNSPrimaria, EPSG:25830)",
+      "reference": "layer state at retrieval date",
+      "retrieved": "2026-11-10",
+      "bytes": 126489,
+      "sha256": "2cd3bc4b63369822390d6c9cfb88b423fec9b1e0415bb679ec7a20acf2457bd4"
+    },
+    {
+      "key": "idena_health_special",
+      "file": "data/raw/idena/DOTACI_Sym_SNSEspecial.geojson",
+      "urls": [
+        "https://idena.navarra.es/ogc/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=IDENA:DOTACI_Sym_SNSEspecial&outputFormat=application/json&count=5000"
+      ],
+      "landing_page": "https://idena.navarra.es/",
+      "licence": "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required",
+      "description": "Servicio Navarro de Salud: specialised-care centres (hospitals, outpatient centres) (IDENA WFS layer DOTACI_Sym_SNSEspecial, EPSG:25830)",
+      "reference": "layer state at retrieval date",
+      "retrieved": "2026-11-10",
+      "bytes": 8064,
+      "sha256": "409d0b02225bbe9db9af9dde707d9aed2c8e38aa754b0c15ae56bef2b1a1e53a"
+    },
+    {
+      "key": "idena_education",
+      "file": "data/raw/idena/DOTACI_Sym_Ctroseduca.geojson",
+      "urls": [
+        "https://idena.navarra.es/ogc/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=IDENA:DOTACI_Sym_Ctroseduca&outputFormat=application/json&count=5000"
+      ],
+      "landing_page": "https://idena.navarra.es/",
+      "licence": "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required",
+      "description": "Departamento de Educacion: education centres with the levels they teach (IDENA WFS layer DOTACI_Sym_Ctroseduca, EPSG:25830)",
+      "reference": "layer state at retrieval date",
+      "retrieved": "2026-11-10",
+      "bytes": 628746,
+      "sha256": "954e3a9e61efae26061fc1097f859095a9f88dc7271f50bbba358498b908a686"
+    },
+    {
+      "key": "idena_industrial",
+      "file": "data/raw/idena/DOTACI_Pol_PolInd.geojson",
+      "urls": [
+        "https://idena.navarra.es/ogc/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=IDENA:DOTACI_Pol_PolInd&outputFormat=application/json&count=5000"
+      ],
+      "landing_page": "https://idena.navarra.es/",
+      "licence": "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required",
+      "description": "Gobierno de Navarra: industrial estates and areas (poligonos industriales) (IDENA WFS layer DOTACI_Pol_PolInd, EPSG:25830)",
+      "reference": "layer state at retrieval date",
+      "retrieved": "2026-11-10",
+      "bytes": 1685485,
+      "sha256": "22a2543e9b28c0c00d06efe00572b3a5b78a5e8c8776f19d7f150379a134765d"
+    }
+  ],
+  "counts": {
+    "study_area_km2": 158.79,
+    "sections": 239,
+    "section_population_total": 375254,
+    "population_in_study_area": 365400,
+    "zones": 1794,
+    "zones_populated": 1309,
+    "zone_section_pieces": 1900,
+    "dasymetric_tiers": {
+      "residential_floor_area": 239,
+      "all_floor_area": 0,
+      "uniform_area": 0
+    },
+    "walk_nodes": 67762,
+    "walk_edges": 88866,
+    "pois": {
+      "city_centre": 1,
+      "health_centre": 35,
+      "hospital": 3,
+      "industrial_estate": 53,
+      "secondary_school": 48,
+      "supermarket": 105,
+      "university": 4
+    },
+    "sections_without_income": 0
+  },
+  "outputs": {
+    "pois.parquet": {
+      "bytes": 13761,
+      "sha256": "56e23e50e11a00f51eb35f06bda1f7e0be77a145af15e50c334f7eeaf1f5d63b"
+    },
+    "sections.parquet": {
+      "bytes": 116296,
+      "sha256": "ffdce7b32631627dcc47bef27cdf49c66830fb67d565a33ecca35b11d63913a5"
+    },
+    "study_area.geojson": {
+      "bytes": 2074,
+      "sha256": "ca04bc634f7c607a6513112c651c4c3bc9c137f526c839c29200acdad51b3d52"
+    },
+    "walk_graph.npz": {
+      "bytes": 1548637,
+      "sha256": "902e36df96c83352be8c05f8134a1338591fb45b589c199f657bf05033dee4e5"
+    },
+    "zone_sections.parquet": {
+      "bytes": 13336,
+      "sha256": "1c1a53b5458002334e78cf70621bc6ebb59541658089e9e192d578a74272953b"
+    },
+    "zones.parquet": {
+      "bytes": 111755,
+      "sha256": "7ab5e39e3eba6c088754ab4c855d3efd2fd16cf35785e1cdf27a1d861655e4d8"
+    }
+  }
+}

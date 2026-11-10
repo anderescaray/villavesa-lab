@@ -1,0 +1,53 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--divider);
+  color: var(--text-secondary);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.accent {
+  background: var(--accent-soft);
+  box-shadow: none;
+  color: var(--accent-text);
+}
+.line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lineLg {
+  min-width: 44px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: var(--text-14);
+  border-radius: var(--radius-sm);
+}
+.lineSm {
+  min-width: 28px;
+  height: 18px;
+  font-size: 10.5px;
+  padding: 0 4px;
+}
+/* very light line colours get a hairline so the chip keeps its edge on white */
+.ring {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}

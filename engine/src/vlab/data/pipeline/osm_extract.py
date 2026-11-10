@@ -7,9 +7,9 @@ Collects, inside the study-area bounding box:
 * land-use polygons (residential / industrial / commercial / retail),
 * candidate features for the POI categories.
 
-Only plain data leaves this module; the classification rules live in
-:mod:`vlab.data.pipeline.walk_graph`, :mod:`~vlab.data.pipeline.buildings`
-and :mod:`~vlab.data.pipeline.pois`.
+Geometries are kept as hex WKB strings. Only plain data leaves this module; the
+classification rules live in :mod:`vlab.data.pipeline.walk_graph`,
+:mod:`~vlab.data.pipeline.buildings` and :mod:`~vlab.data.pipeline.pois`.
 """
 
 from __future__ import annotations
@@ -55,13 +55,13 @@ class OsmExtract:
     way_lon: list[npt.NDArray[np.float64]] = field(default_factory=list)
     way_lat: list[npt.NDArray[np.float64]] = field(default_factory=list)
     way_tags: list[dict[str, str]] = field(default_factory=list)
-    building_wkb: list[bytes] = field(default_factory=list)
+    building_wkb: list[str] = field(default_factory=list)
     building_tags: list[dict[str, str]] = field(default_factory=list)
     building_ids: list[str] = field(default_factory=list)
-    landuse_wkb: list[bytes] = field(default_factory=list)
+    landuse_wkb: list[str] = field(default_factory=list)
     landuse_tags: list[dict[str, str]] = field(default_factory=list)
     landuse_ids: list[str] = field(default_factory=list)
-    feature_wkb: list[bytes] = field(default_factory=list)
+    feature_wkb: list[str] = field(default_factory=list)
     feature_tags: list[dict[str, str]] = field(default_factory=list)
     feature_ids: list[str] = field(default_factory=list)
 
@@ -88,11 +88,14 @@ def extract(pbf: Path, bbox: tuple[float, float, float, float]) -> OsmExtract:
     """Scan ``pbf`` and keep the objects intersecting ``bbox`` (lon/lat min-max)."""
     import osmium  # pipeline-only dependency
     import shapely
+    from osmium.osm import Area, Node, Way
 
     lon0, lat0, lon1, lat1 = bbox
     out = OsmExtract()
     wkb = osmium.geom.WKBFactory()
-    area_keys = osmium.filter.KeyFilter("building", "landuse", "amenity", "healthcare", "shop", "place", "highway", "name")
+    area_keys = osmium.filter.KeyFilter(
+        "building", "landuse", "amenity", "healthcare", "shop", "place", "highway", "name"
+    )
     fp = (
         osmium.FileProcessor(str(pbf))
         .with_locations()
@@ -101,7 +104,7 @@ def extract(pbf: Path, bbox: tuple[float, float, float, float]) -> OsmExtract:
     )
     n_bad = 0
     for obj in fp:
-        if obj.is_node():
+        if isinstance(obj, Node):
             loc = obj.location
             if not loc.valid() or not (lon0 <= loc.lon <= lon1 and lat0 <= loc.lat <= lat1):
                 continue
@@ -110,7 +113,7 @@ def extract(pbf: Path, bbox: tuple[float, float, float, float]) -> OsmExtract:
                 out.feature_wkb.append(wkb.create_point(obj))
                 out.feature_tags.append(t)
                 out.feature_ids.append(f"n{obj.id}")
-        elif obj.is_way():
+        elif isinstance(obj, Way):
             if "highway" not in obj.tags:
                 continue
             try:
@@ -130,7 +133,7 @@ def extract(pbf: Path, bbox: tuple[float, float, float, float]) -> OsmExtract:
             out.way_lon.append(lon)
             out.way_lat.append(lat)
             out.way_tags.append(_pick(obj.tags, WAY_TAGS))
-        elif obj.is_area():
+        elif isinstance(obj, Area):
             try:
                 geom = wkb.create_multipolygon(obj)
             except Exception:  # broken multipolygons are skipped

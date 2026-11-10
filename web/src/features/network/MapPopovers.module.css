@@ -1,0 +1,81 @@
+.anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-map-ui);
+  will-change: transform;
+  pointer-events: none;
+}
+.stop {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  width: 264px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  animation: enter var(--dur) var(--ease-out);
+}
+.stopHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-1) var(--space-2) var(--space-3);
+}
+.stopName {
+  font-size: var(--text-13);
+  font-weight: var(--weight-semibold);
+  line-height: 1.35;
+}
+.stopId {
+  margin-top: 1px;
+  color: var(--text-tertiary);
+  font-size: var(--text-11);
+  font-variant-numeric: tabular-nums;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--space-3) var(--space-3);
+}
+.badgeButton {
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: none;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.badgeButton:hover {
+  transform: translateY(-1px);
+}
+.stopFoot {
+  padding: var(--space-2);
+  border-top: 1px solid var(--divider);
+}
+.stopFoot button {
+  width: 100%;
+  justify-content: flex-start;
+}
+.tooltip {
+  position: absolute;
+  z-index: var(--z-popover);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-2) 6px 6px;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-float);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(12px, -50%);
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+}

@@ -24,6 +24,29 @@ class Source:
     extra: dict[str, str] = field(default_factory=dict)
 
 
+_IDENA_LICENCE = "CC BY 4.0, Gobierno de Navarra (IDENA / SITNA); attribution required"
+_IDENA_CADASTRE = (
+    "https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_1_SHAPEFILE"
+)
+_IDENA_WFS = "https://idena.navarra.es/ogc/wfs"
+
+
+def _wfs(key: str, layer: str, description: str) -> Source:
+    url = (
+        f"{_IDENA_WFS}?service=WFS&version=2.0.0&request=GetFeature"
+        f"&typeNames=IDENA:{layer}&outputFormat=application/json&count=5000"
+    )
+    return Source(
+        key=key,
+        filename=f"idena/{layer}.geojson",
+        urls=(url,),
+        licence=_IDENA_LICENCE,
+        description=f"{description} (IDENA WFS layer {layer}, EPSG:25830)",
+        reference="layer state at retrieval date",
+        landing_page="https://idena.navarra.es/",
+    )
+
+
 SOURCES: dict[str, Source] = {
     s.key: s
     for s in (
@@ -84,6 +107,50 @@ SOURCES: dict[str, Source] = {
             reference="2024 (sections as of 2025-01-01)",
             landing_page="https://www.ine.es/jaxiT3/Tabla.htm?t=31132",
         ),
+        Source(
+            key="idena_buildings",
+            filename="idena/CATAST_Pol_Edificacion.zip",
+            urls=(f"{_IDENA_CADASTRE}/CATAST_Pol_Edificacion.zip",),
+            licence=_IDENA_LICENCE,
+            description=(
+                "Registro de la Riqueza Territorial de Navarra (foral cadastre): building "
+                "volume footprints (CATAST_Pol_Edificacion)"
+            ),
+            reference="cadastre extract published by IDENA (see BEGINLIFE dates)",
+            landing_page="https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/",
+        ),
+        Source(
+            key="idena_building_heights",
+            filename="idena/CATAST_Txt_EdifAlturas.zip",
+            urls=(f"{_IDENA_CADASTRE}/CATAST_Txt_EdifAlturas.zip",),
+            licence=_IDENA_LICENCE,
+            description=(
+                "Foral cadastre: height labels of each building volume, floors above and "
+                "below ground (CATAST_Txt_EdifAlturas)"
+            ),
+            reference="cadastre extract published by IDENA",
+            landing_page="https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/",
+        ),
+        _wfs(
+            "idena_health_primary",
+            "DOTACI_Sym_SNSPrimaria",
+            "Servicio Navarro de Salud: primary-care centres (centros de salud, consultorios)",
+        ),
+        _wfs(
+            "idena_health_special",
+            "DOTACI_Sym_SNSEspecial",
+            "Servicio Navarro de Salud: specialised-care centres (hospitals, outpatient centres)",
+        ),
+        _wfs(
+            "idena_education",
+            "DOTACI_Sym_Ctroseduca",
+            "Departamento de Educacion: education centres with the levels they teach",
+        ),
+        _wfs(
+            "idena_industrial",
+            "DOTACI_Pol_PolInd",
+            "Gobierno de Navarra: industrial estates and areas (poligonos industriales)",
+        ),
     )
 }
 
@@ -102,7 +169,9 @@ def download(source: Source, raw_dir: Path, *, force: bool = False, retries: int
     if not source.urls:
         if dest.exists():
             return dest
-        raise FileNotFoundError(f"{dest} is missing and has no download URL ({source.landing_page})")
+        raise FileNotFoundError(
+            f"{dest} is missing and has no download URL ({source.landing_page})"
+        )
     dest.parent.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     for url in source.urls:

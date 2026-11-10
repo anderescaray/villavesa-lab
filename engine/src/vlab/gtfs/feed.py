@@ -13,6 +13,7 @@ fast to group.
 
 from __future__ import annotations
 
+import contextlib
 import io
 import json
 import zipfile
@@ -160,7 +161,8 @@ def parse_gtfs_time(values: pa.ChunkedArray | pa.Array) -> npt.NDArray[np.int32]
         raise FeedValidationError("stop_times.txt: minutes/seconds out of range in a time value")
     secs = hms[:, 0] * 3600 + hms[:, 1] * 60 + hms[:, 2]
     secs[empty] = -1
-    return secs.astype(np.int32)
+    out: npt.NDArray[np.int32] = secs.astype(np.int32)
+    return out
 
 
 def _to_int(values: npt.NDArray[np.object_], what: str, default: int | None = None) -> np.ndarray:
@@ -190,7 +192,9 @@ def _check_refs(child: pd.Series, parent: pd.Series, what: str) -> None:
     missing = ~child.isin(set(parent))
     if missing.any():
         examples = sorted(set(child[missing]))[:5]
-        raise FeedValidationError(f"{what}: {int(missing.sum())} unknown reference(s), e.g. {examples}")
+        raise FeedValidationError(
+            f"{what}: {int(missing.sum())} unknown reference(s), e.g. {examples}"
+        )
 
 
 def _check_unique(series: pd.Series, what: str) -> None:
@@ -318,7 +322,9 @@ def _parse_zip(path: Path) -> dict[str, pd.DataFrame]:
 
     sh = raw.get("shapes.txt")
     if sh is not None and sh.num_rows:
-        _require(sh, "shapes.txt", ("shape_id", "shape_pt_lat", "shape_pt_lon", "shape_pt_sequence"))
+        _require(
+            sh, "shapes.txt", ("shape_id", "shape_pt_lat", "shape_pt_lon", "shape_pt_sequence")
+        )
         shapes = pd.DataFrame(
             {
                 "shape_id": _str_series(_col(sh, "shape_id")),
@@ -365,7 +371,8 @@ def _encode(values: pa.ChunkedArray, ids: pd.Series, what: str) -> npt.NDArray[n
         mask = pc.is_null(codes).to_numpy(zero_copy_only=False)
         bad = sorted(set(pc.filter(values, pa.array(mask)).to_pylist()))[:5]
         raise FeedValidationError(f"{what}: {int(mask.sum())} unknown reference(s), e.g. {bad}")
-    return codes.to_numpy(zero_copy_only=False).astype(np.int32)
+    out: npt.NDArray[np.int32] = codes.to_numpy(zero_copy_only=False).astype(np.int32)
+    return out
 
 
 def _parse_stop_times(st: pa.Table, trips: pd.DataFrame, stops: pd.DataFrame) -> pd.DataFrame:
@@ -496,8 +503,7 @@ def load_feed(path: str | Path, *, cache_dir: Path | None = None, use_cache: boo
     if tables is None:
         tables = _parse_zip(path)
         if use_cache:
-            try:
+            # a read-only filesystem is fine: caching is an optimisation only
+            with contextlib.suppress(OSError):
                 _write_cache(folder, tables, sha)
-            except OSError:
-                pass  # read-only filesystem: caching is an optimisation only
     return Feed(**tables, source_sha256=sha)
