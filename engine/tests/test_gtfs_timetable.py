@@ -17,6 +17,7 @@ from vlab.gtfs import (
     load_feed,
     project_monotone,
     synthetic_timetable,
+    to_xy,
     trips_mask,
 )
 from vlab.gtfs.timetable import fifo_chains, sort_trips, validate_timetable
@@ -139,3 +140,22 @@ def test_real_stop_offsets_close_to_shape(tt_weekday: Timetable) -> None:
         worst = max(worst, float(dist.max()))
         assert tt.pattern_offsets(p)[-1] <= tt.shape_cum_m[tt.shape_ptr[si + 1] - 1] + 1e-6
     assert worst < 150.0
+
+
+def test_pattern_path_follows_shape(tt_weekday: Timetable) -> None:
+    tt = tt_weekday
+    for p in range(0, tt.n_patterns, 17):
+        seq = tt.pattern_stop_seq(p)
+        full = tt.pattern_path(p)
+        x, y = to_xy(full[:, 0], full[:, 1])
+        length = float(np.hypot(np.diff(x), np.diff(y)).sum())
+        expect = tt.pattern_offsets(p)[-1] - tt.pattern_offsets(p)[0]
+        assert length == pytest.approx(expect, rel=0.01, abs=5.0)
+        part = tt.pattern_path(p, 1, len(seq) - 2)
+        assert len(part) >= 2
+        # endpoints are the projections of the stops: close to the stops themselves
+        sx, sy = to_xy(part[[0, -1], 0], part[[0, -1], 1])
+        d = np.hypot(sx - tt.stop_x[seq[[1, -2]]], sy - tt.stop_y[seq[[1, -2]]])
+        assert d.max() < 150.0
+    toy = synthetic_timetable([0.0, 0.001, 0.002], [42.8] * 3, [([0, 1, 2], [[0, 1, 2]], None)])
+    assert toy.pattern_path(0, 0, 1).shape == (2, 2)

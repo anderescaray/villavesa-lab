@@ -26,8 +26,10 @@ load_study_area, load_zone_sections, load_manifest`). The data root defaults to
 | Zone × section pieces | 1,900 |
 | Walk graph | 67,762 nodes, 88,866 undirected edges, 2,659 km, max edge 60 m |
 | POIs | hospital 3 · health_centre 35 · university 4 · industrial_estate 53 · city_centre 1 · secondary_school 48 · supermarket 105 |
+| Drive graph (buses) | 21,228 nodes, 35,430 directed edges (1,520 km of directed lanes), max edge 60 m, one strongly connected component |
+| Drive graph vs GTFS | 99.6% of stops within 50 m of a node (median 12.3 m, p95 24.2 m, max 96.3 m); 99.3% of 35,062 shape vertices within 15 m of an edge |
 | Sections with income | 239 / 239 (ADRH 2024) |
-| Bundle size | 1.8 MB |
+| Bundle size | 2.3 MB |
 
 Residents inside the study area by municipality (top 12, from
 `sections.population_in_study_area`): Pamplona/Iruña 206,464 · Valle de Egüés
@@ -45,7 +47,8 @@ Noáin (Valle de Elorz) 7,095 · Berrioplano 6,874.
 | `zone_sections.parquet` | Crosswalk `zone_id`, `section_id`, `population`: residents each section puts in each zone (a cell can straddle sections). Sums per section equal `population_in_study_area` exactly. Added beyond the original contract to make conservation testable and to let the equity view mix incomes of straddling cells. |
 | `pois.parquet` | `poi_id`, `category`, `name`, `lon`, `lat`, `weight`, `source`, `source_id`. |
 | `walk_graph.npz` | `node_lon`, `node_lat` (float64), `indptr`, `indices` (int32), `length_m` (float32): symmetric CSR, one connected component. |
-| `manifest.json` | Sources, licences, retrieval dates, sha256, counts, parameters. |
+| `drive_graph.npz` | Directed street graph for buses, CSR by origin node: `node_lon`, `node_lat` (float64), `indptr`, `indices` (int32), `length_m`, `speed_kmh` (float32 per edge), `highway_class` (uint8 per edge, index into the string array `highway_classes`, also listed in `manifest.json` → `drive_graph.highway_classes`). Used to snap newly drawn lines to streets. |
+| `manifest.json` | Sources, licences, retrieval dates, sha256, counts, parameters, drive-graph sanity checks. |
 
 ## Sources
 
@@ -78,6 +81,28 @@ Noáin (Valle de Elorz) 7,095 · Berrioplano 6,874.
     segments not fully inside the study area are dropped; self-loops dropped,
     parallel edges keep the shortest; only the largest connected component is kept
     (99.1% of nodes).
+- **Drive graph for buses** (`pipeline/drive_graph.py`, same OSM pass):
+  - classes: `motorway, trunk, primary, secondary, tertiary, unclassified,
+    residential, living_street` and their `_link` variants, `busway`,
+    `bus_guideway`; `service` only with `bus` or `psv` = `yes|designated`;
+    excluded when `access`, `motor_vehicle` or `vehicle` is `no|private` unless
+    `bus`/`psv` = `yes|designated|permissive`; `pedestrian`/`footway` never.
+  - direction: `oneway=yes|true|1` forward, `-1` backward; roundabouts
+    (`junction=roundabout|circular`) and `motorway(_link)` implied one-way unless
+    `oneway=no`; bus contraflow with `oneway:bus=no`, `oneway:psv=no` or
+    `busway[:left|:right|:both]=opposite_lane`.
+  - `speed_kmh`: `maxspeed:forward|backward` or `maxspeed` (numbers, mph, `ES:urban`
+    50, `ES:zone30` 30, `ES:zone20` 20), else the legal default by class (RD 970/2020
+    urban limits): primary/secondary/tertiary 50, unclassified/residential 30,
+    living_street/service 20, links 40 (trunk_link 50, motorway_link 60), trunk 80,
+    motorway 100, busway 50. These are speed limits, not bus running speeds.
+  - same splitting/densification as the walk graph (≤ 60 m edges), segments fully
+    inside the study area, shortest of parallel edges, largest strongly connected
+    component (98.0% of nodes).
+  - sanity vs GTFS: 99.6% of the 563 stops lie within 50 m of a node (median 12.3 m);
+    the only two beyond are both "Universidad Pública de Navarra" (94–96 m), served by
+    a campus road that OSM tags as `highway=service` without `bus`/`psv`. 99.3% of
+    GTFS shape vertices are within 15 m of an edge.
 - **Caveats**: OSM completeness varies (sidewalks are mapped as separate footways in
   much of Pamplona; elsewhere the carriageway stands in for its sidewalk). No
   slope, crossings or barriers are modelled: walking speed is applied uniformly by

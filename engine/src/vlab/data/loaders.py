@@ -270,6 +270,83 @@ def load_walk_graph_arrays(data_dir: Path | None = None) -> WalkGraphData:
     return g
 
 
+@dataclass(frozen=True)
+class DriveGraphData:
+    """Raw arrays of ``drive_graph.npz``: directed CSR by origin node."""
+
+    node_lon: npt.NDArray[np.float64]
+    node_lat: npt.NDArray[np.float64]
+    indptr: npt.NDArray[np.int32]
+    indices: npt.NDArray[np.int32]
+    length_m: npt.NDArray[np.float32]
+    speed_kmh: npt.NDArray[np.float32]
+    highway_class: npt.NDArray[np.uint8]
+    highway_classes: tuple[str, ...]
+
+    @property
+    def n_nodes(self) -> int:
+        return int(self.node_lon.shape[0])
+
+    @property
+    def n_edges(self) -> int:
+        """Directed edge count."""
+        return int(self.indices.shape[0])
+
+    def edge_class_names(self) -> npt.NDArray[np.str_]:
+        """``highway`` class name of every edge."""
+        return np.asarray(self.highway_classes)[self.highway_class]
+
+
+def load_drive_graph_arrays(data_dir: Path | None = None) -> DriveGraphData:
+    """Load and validate the directed bus street graph."""
+    path = _dir(data_dir) / paths.DRIVE_GRAPH_FILE
+    _require_file(path)
+    expected = {
+        "node_lon": np.float64,
+        "node_lat": np.float64,
+        "indptr": np.int32,
+        "indices": np.int32,
+        "length_m": np.float32,
+        "speed_kmh": np.float32,
+        "highway_class": np.uint8,
+    }
+    arrays: dict[str, Any] = {}
+    with np.load(path) as z:
+        for key, dtype in expected.items():
+            if key not in z.files:
+                raise _fail(path, f"missing array {key!r} (has {z.files})")
+            a = z[key]
+            if a.dtype != dtype or a.ndim != 1:
+                raise _fail(
+                    path, f"array {key!r} must be 1-D {np.dtype(dtype)}, got {a.ndim}-D {a.dtype}"
+                )
+            arrays[key] = a
+        if "highway_classes" not in z.files or z["highway_classes"].dtype.kind != "U":
+            raise _fail(path, "missing string array 'highway_classes'")
+        arrays["highway_classes"] = tuple(str(c) for c in z["highway_classes"])
+    g = DriveGraphData(**arrays)
+    n, m = g.n_nodes, g.n_edges
+    if g.node_lat.shape[0] != n or g.indptr.shape[0] != n + 1:
+        raise _fail(path, "inconsistent node / indptr lengths")
+    if g.indptr[0] != 0 or g.indptr[-1] != m or np.any(np.diff(g.indptr) < 0):
+        raise _fail(path, "malformed indptr")
+    for key in ("length_m", "speed_kmh", "highway_class"):
+        if arrays[key].shape[0] != m:
+            raise _fail(path, f"{key} and indices differ in length")
+    if m and (g.indices.min() < 0 or g.indices.max() >= n):
+        raise _fail(path, "indices out of range")
+    if not (np.isfinite(g.length_m).all() and (g.length_m > 0).all()):
+        raise _fail(path, "edge lengths must be finite and positive")
+    if not (
+        np.isfinite(g.speed_kmh).all() and (g.speed_kmh >= 5).all() and (g.speed_kmh <= 130).all()
+    ):
+        raise _fail(path, "edge speeds must be within 5..130 km/h")
+    if m and int(g.highway_class.max()) >= len(g.highway_classes):
+        raise _fail(path, "highway_class index out of range of highway_classes")
+    _check_lonlat(g.node_lon, g.node_lat, path)
+    return g
+
+
 def load_study_area(data_dir: Path | None = None) -> BaseGeometry:
     """Study-area polygon (EPSG:4326)."""
     path = _dir(data_dir) / paths.STUDY_AREA_FILE

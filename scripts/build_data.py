@@ -5,7 +5,7 @@ Steps (each implemented in :mod:`vlab.data.pipeline`):
 1. download raw inputs (cached in ``data/raw``; ``--force`` re-downloads),
 2. study area from the GTFS stops,
 3. one pyosmium pass over the OSM extract,
-4. walk graph,
+4. walk graph and bus drive graph,
 5. census sections + population + income (INE),
 6. cadastre buildings (IDENA) classified by use,
 7. POIs,
@@ -43,6 +43,12 @@ from vlab.data.pipeline.common import (
     sha256_file,
     to_utm,
     to_wgs,
+)
+from vlab.data.pipeline.drive_graph import (
+    HIGHWAY_CLASSES,
+    build_drive_graph,
+    drive_graph_sanity,
+    is_drivable,
 )
 from vlab.data.pipeline.osm_extract import extract
 from vlab.data.pipeline.pois import build_pois, read_wfs_geojson
@@ -125,6 +131,44 @@ def run(force: bool, skip_download: bool) -> None:
     )  # fmt: skip
     _done(t)
 
+    t = _step("5b. drive graph (buses)")
+    dsel = [i for i, tags in enumerate(osm.way_tags) if is_drivable(tags)]
+    dxy = [to_utm(osm.way_lon[i], osm.way_lat[i]) for i in dsel]
+    drive = build_drive_graph(
+        [osm.way_nodes[i] for i in dsel],
+        [p[0] for p in dxy],
+        [p[1] for p in dxy],
+        [osm.way_tags[i] for i in dsel],
+        clip=area,
+    )
+    d_lon, d_lat = to_wgs(drive.x, drive.y)
+    np.savez_compressed(
+        out / paths.DRIVE_GRAPH_FILE,
+        node_lon=d_lon,
+        node_lat=d_lat,
+        indptr=drive.indptr,
+        indices=drive.indices,
+        length_m=drive.length_m,
+        speed_kmh=drive.speed_kmh,
+        highway_class=drive.highway_class,
+        highway_classes=np.array(HIGHWAY_CLASSES),
+    )
+    drive_stats = drive_graph_sanity(drive, files["gtfs"])
+    drive_stats.update(
+        {
+            "ways": len(dsel),
+            "nodes": drive.n_nodes,
+            "directed_edges": drive.n_edges,
+            "km_directed": round(float(drive.length_m.sum()) / 1000.0, 1),
+            "highway_classes": list(HIGHWAY_CLASSES),
+        }
+    )
+    log.info(
+        "  %d drivable ways -> %d nodes, %d directed edges",
+        len(dsel), drive.n_nodes, drive.n_edges,
+    )  # fmt: skip
+    _done(t)
+
     t = _step("6. buildings (cadastre + OSM use)")
     cadastre = bld.read_cadastre_buildings(
         files["idena_buildings"], files["idena_building_heights"], sections_union
@@ -167,6 +211,7 @@ def run(force: bool, skip_download: bool) -> None:
     t = _step("9. write bundle")
     _write_bundle(out, area, sections, zb, pois)
     manifest = _manifest(files, out, area, sections, zb, pois, graph.n_nodes, graph.n_edges)
+    manifest["drive_graph"] = drive_stats
     (out / paths.MANIFEST_FILE).write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

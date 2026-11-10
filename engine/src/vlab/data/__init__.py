@@ -10,7 +10,9 @@ pipeline steps in :mod:`vlab.data.pipeline`; see ``docs/data.md``.
 from vlab.data.loaders import (
     POI_CATEGORIES,
     DataSchemaError,
+    DriveGraphData,
     WalkGraphData,
+    load_drive_graph_arrays,
     load_manifest,
     load_pois,
     load_sections,
@@ -24,9 +26,11 @@ from vlab.data.paths import data_dir, gtfs_path, processed_dir, raw_dir
 __all__ = [
     "POI_CATEGORIES",
     "DataSchemaError",
+    "DriveGraphData",
     "WalkGraphData",
     "data_dir",
     "gtfs_path",
+    "load_drive_graph_arrays",
     "load_manifest",
     "load_pois",
     "load_sections",

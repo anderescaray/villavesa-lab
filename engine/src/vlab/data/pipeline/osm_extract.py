@@ -26,6 +26,10 @@ from vlab.data.pipeline.common import log
 WAY_TAGS = (
     "highway", "foot", "access", "sidewalk", "sidewalk:both", "sidewalk:left",
     "sidewalk:right", "footway", "area", "service", "motorroad", "indoor", "name",
+    # drive graph (bus)
+    "oneway", "oneway:bus", "oneway:psv", "junction", "busway", "busway:left",
+    "busway:right", "busway:both", "bus", "psv", "motor_vehicle", "vehicle", "maxspeed",
+    "maxspeed:forward", "maxspeed:backward", "lanes",
 )  # fmt: skip
 BUILDING_TAGS = (
     "building", "building:levels", "building:levels:underground", "height", "amenity",

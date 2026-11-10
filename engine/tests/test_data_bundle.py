@@ -59,6 +59,7 @@ def test_all_contract_files_present() -> None:
         "zone_sections.parquet",
         "pois.parquet",
         "walk_graph.npz",
+        "drive_graph.npz",
         "manifest.json",
     ):
         assert f in names

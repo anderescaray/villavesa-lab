@@ -149,7 +149,7 @@ function IsochronePin() {
     }
     if (!markerRef.current) {
       const el = document.createElement('div');
-      el.className = s.pin;
+      el.className = s.pin ?? '';
       el.setAttribute('data-testid', 'iso-pin');
       el.innerHTML = `<span class="${s.pulse}"></span><span class="${s.dot}"></span>`;
       markerRef.current = new maplibregl.Marker({ element: el }).setLngLat(origin).addTo(map);

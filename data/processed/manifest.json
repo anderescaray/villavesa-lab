@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-10T22:44:21Z",
+  "generated": "2026-11-10T22:48:26Z",
   "generator": "scripts/build_data.py",
   "parameters": {
     "study_area_buffer_m": 1500.0,
@@ -190,6 +190,10 @@
     "sections_without_income": 0
   },
   "outputs": {
+    "drive_graph.npz": {
+      "bytes": 435725,
+      "sha256": "61057aca99ac4ff59e9c0dcca2ade1d614e8e2cbed4eb103f0d553726e0ba021"
+    },
     "pois.parquet": {
       "bytes": 13761,
       "sha256": "56e23e50e11a00f51eb35f06bda1f7e0be77a145af15e50c334f7eeaf1f5d63b"
@@ -214,5 +218,40 @@
       "bytes": 111755,
       "sha256": "7ab5e39e3eba6c088754ab4c855d3efd2fd16cf35785e1cdf27a1d861655e4d8"
     }
+  },
+  "drive_graph": {
+    "stops": 563,
+    "stop_to_node_m_percentiles": {
+      "p50": 12.3,
+      "p90": 21.3,
+      "p95": 24.2,
+      "p99": 28.0,
+      "p100": 96.3
+    },
+    "stops_within_50m_share": 0.9964,
+    "shape_vertices": 35062,
+    "shape_vertices_within_15m_share": 0.9927,
+    "ways": 13117,
+    "nodes": 21228,
+    "directed_edges": 35430,
+    "km_directed": 1520.1,
+    "highway_classes": [
+      "motorway",
+      "motorway_link",
+      "trunk",
+      "trunk_link",
+      "primary",
+      "primary_link",
+      "secondary",
+      "secondary_link",
+      "tertiary",
+      "tertiary_link",
+      "unclassified",
+      "residential",
+      "living_street",
+      "service",
+      "busway",
+      "bus_guideway"
+    ]
   }
 }

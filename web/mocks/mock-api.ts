@@ -163,7 +163,8 @@ function isochrone(body: {
         const ii = ci + di;
         const jj = cj + dj;
         if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue;
-        density[jj * nx + ii] += Math.sqrt(s[2]) * Math.exp(-(di * di + dj * dj) / 8);
+        const q = jj * nx + ii;
+        density[q] = (density[q] ?? 0) + Math.sqrt(s[2]) * Math.exp(-(di * di + dj * dj) / 8);
       }
   }
   let densityTotal = 0;

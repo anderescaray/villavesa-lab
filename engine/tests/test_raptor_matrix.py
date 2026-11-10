@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -14,7 +16,7 @@ from vlab.raptor import (
     raptor_batch,
     travel_time_matrix,
 )
-from vlab.walk import WalkTable, euclidean_table
+from vlab.walk import WalkGraph, WalkTable, build_access, euclidean_table
 
 
 def _brute_matrix(
@@ -119,3 +121,23 @@ def test_batch_matches_single_queries(
             s, sec = acc.row(o)
             r = raptor(tt_weekday, transfers_weekday, s, int(t0), sec, max_duration=3 * 3600)
             np.testing.assert_array_equal(out[o, d], r.arrival)
+
+
+def test_real_zone_matrix_end_to_end(
+    walk_graph: WalkGraph, tt_weekday: Timetable, transfers_weekday: WalkTable
+) -> None:
+    import pandas as pd
+
+    path = Path(__file__).resolve().parents[2] / "data" / "processed" / "zones.parquet"
+    if not path.is_file():
+        pytest.skip("zones.parquet not built yet")
+    zones = pd.read_parquet(path, columns=["lon", "lat"])
+    pts = (zones["lon"].to_numpy(), zones["lat"].to_numpy())
+    acc = build_access(walk_graph, pts, tt_weekday, 1000.0)
+    m = travel_time_matrix(
+        tt_weekday, transfers_weekday, acc, acc.transpose(), departure_samples(8 * 3600, 3600)
+    )
+    assert m.shape == (len(zones), len(zones))
+    ok = m < UNREACHABLE_U16
+    assert ok.mean() > 0.3
+    assert np.median(m[ok]) < 3600

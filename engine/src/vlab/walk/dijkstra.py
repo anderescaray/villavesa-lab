@@ -117,8 +117,11 @@ def _collect(  # type: ignore[no-untyped-def]  # pragma: no cover
     return n_best
 
 
-@nb.njit(cache=True, parallel=True)
-def many_to_many(  # type: ignore[no-untyped-def]  # pragma: no cover
+@nb.njit(cache=True)
+def _m2m_chunk(  # type: ignore[no-untyped-def]  # pragma: no cover
+    c,
+    n_chunks,
+    fill,
     indptr,
     indices,
     weight,
@@ -131,100 +134,126 @@ def many_to_many(  # type: ignore[no-untyped-def]  # pragma: no cover
     n_targets,
     cutoff,
     exclude_self,
+    counts,
+    ptr,
+    out_t,
+    out_d,
 ):
-    """Bounded network distances from every source group to every target.
-
-    Sources: group ``i`` = nodes ``src_nodes[src_ptr[i]:src_ptr[i+1]]`` with offsets.
-    Targets: per-node CSR ``node_tgt_ptr`` (len n_nodes+1) → target ids and offsets.
-    Returns CSR ``(ptr int64, tgt int32, dist float64)`` sorted by target within a row.
-    ``exclude_self`` drops target ``i`` from row ``i``.
-    """
+    """Sources ``c, c + n_chunks, ...``: count results (``fill=False``) or write them."""
     n_src = len(src_ptr) - 1
     n_nodes = len(indptr) - 1
     cap = len(indices) + len(src_nodes) + 1
-    n_chunks = min(n_src, 64) if n_src > 0 else 1
-    counts = np.zeros(n_src, dtype=np.int64)
-    # pass 1: counts
-    for c in nb.prange(n_chunks):
-        dist = np.full(n_nodes, np.inf)
-        touched = np.empty(n_nodes, dtype=np.int64)
-        hk = np.empty(cap, dtype=np.float64)
-        hv = np.empty(cap, dtype=np.int64)
-        pred = np.empty(1, dtype=np.int64)
-        best = np.full(n_targets, np.inf)
-        best_list = np.empty(n_targets, dtype=np.int64)
-        for s in range(c, n_src, n_chunks):
-            a, b = src_ptr[s], src_ptr[s + 1]
-            nt = dijkstra_scratch(
-                indptr,
-                indices,
-                weight,
-                src_nodes[a:b],
-                src_off[a:b],
-                cutoff,
-                dist,
-                touched,
-                hk,
-                hv,
-                pred,
-                False,
-            )
-            nb_ = _collect(
-                dist, touched, nt, node_tgt_ptr, node_tgt, node_tgt_off, best, best_list, cutoff
-            )
-            cnt = nb_
-            for k in range(nb_):
-                t = best_list[k]
-                if exclude_self and t == s:
-                    cnt -= 1
-                best[t] = np.inf
-            counts[s] = cnt
-            for k in range(nt):
-                dist[touched[k]] = np.inf
-    ptr = np.zeros(n_src + 1, dtype=np.int64)
-    for s in range(n_src):
-        ptr[s + 1] = ptr[s] + counts[s]
-    out_t = np.empty(ptr[n_src], dtype=np.int32)
-    out_d = np.empty(ptr[n_src], dtype=np.float64)
-    # pass 2: fill
-    for c in nb.prange(n_chunks):
-        dist = np.full(n_nodes, np.inf)
-        touched = np.empty(n_nodes, dtype=np.int64)
-        hk = np.empty(cap, dtype=np.float64)
-        hv = np.empty(cap, dtype=np.int64)
-        pred = np.empty(1, dtype=np.int64)
-        best = np.full(n_targets, np.inf)
-        best_list = np.empty(n_targets, dtype=np.int64)
-        for s in range(c, n_src, n_chunks):
-            a, b = src_ptr[s], src_ptr[s + 1]
-            nt = dijkstra_scratch(
-                indptr,
-                indices,
-                weight,
-                src_nodes[a:b],
-                src_off[a:b],
-                cutoff,
-                dist,
-                touched,
-                hk,
-                hv,
-                pred,
-                False,
-            )
-            nb_ = _collect(
-                dist, touched, nt, node_tgt_ptr, node_tgt, node_tgt_off, best, best_list, cutoff
-            )
-            sel = np.sort(best_list[:nb_])
+    dist = np.full(n_nodes, np.inf)
+    touched = np.empty(n_nodes, dtype=np.int64)
+    hk = np.empty(cap, dtype=np.float64)
+    hv = np.empty(cap, dtype=np.int64)
+    pred = np.empty(1, dtype=np.int64)
+    best = np.full(n_targets, np.inf)
+    best_list = np.empty(n_targets, dtype=np.int64)
+    for s in range(c, n_src, n_chunks):
+        a, b = src_ptr[s], src_ptr[s + 1]
+        nt = dijkstra_scratch(
+            indptr,
+            indices,
+            weight,
+            src_nodes[a:b],
+            src_off[a:b],
+            cutoff,
+            dist,
+            touched,
+            hk,
+            hv,
+            pred,
+            False,
+        )
+        n_best = _collect(
+            dist, touched, nt, node_tgt_ptr, node_tgt, node_tgt_off, best, best_list, cutoff
+        )
+        if fill:
+            sel = np.sort(best_list[:n_best])
             w = ptr[s]
-            for k in range(nb_):
+            for k in range(n_best):
                 t = sel[k]
                 if not (exclude_self and t == s):
                     out_t[w] = t
                     out_d[w] = best[t]
                     w += 1
                 best[t] = np.inf
-            for k in range(nt):
-                dist[touched[k]] = np.inf
+        else:
+            cnt = n_best
+            for k in range(n_best):
+                t = best_list[k]
+                if exclude_self and t == s:
+                    cnt -= 1
+                best[t] = np.inf
+            counts[s] = cnt
+        for k in range(nt):
+            dist[touched[k]] = np.inf
+
+
+@nb.njit(cache=True, parallel=True)
+def _m2m_parallel(n_chunks, fill, *args):  # type: ignore[no-untyped-def]  # pragma: no cover
+    for c in nb.prange(n_chunks):
+        _m2m_chunk(c, n_chunks, fill, *args)
+
+
+@nb.njit(cache=True)
+def _m2m_serial(n_chunks, fill, *args):  # type: ignore[no-untyped-def]  # pragma: no cover
+    for c in range(n_chunks):
+        _m2m_chunk(c, n_chunks, fill, *args)
+
+
+def many_to_many(
+    indptr: np.ndarray,
+    indices: np.ndarray,
+    weight: np.ndarray,
+    src_ptr: np.ndarray,
+    src_nodes: np.ndarray,
+    src_off: np.ndarray,
+    node_tgt_ptr: np.ndarray,
+    node_tgt: np.ndarray,
+    node_tgt_off: np.ndarray,
+    n_targets: int,
+    cutoff: float,
+    exclude_self: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Bounded network distances from every source group to every target.
+
+    Sources: group ``i`` = nodes ``src_nodes[src_ptr[i]:src_ptr[i+1]]`` with offsets.
+    Targets: per-node CSR ``node_tgt_ptr`` (len n_nodes+1) -> target ids and offsets.
+    Returns CSR ``(ptr int64, tgt int32, dist float64)`` sorted by target within a row.
+    ``exclude_self`` drops target ``i`` from row ``i``. Two passes (count, fill); small
+    batches run serially (a parallel launch costs more than a single bounded search,
+    especially on a busy machine).
+    """
+    n_src = len(src_ptr) - 1
+    n_chunks = max(1, min(n_src, 64))
+    run = _m2m_parallel if n_src > 8 else _m2m_serial
+    counts = np.zeros(max(n_src, 1), dtype=np.int64)
+    dummy_t = np.empty(0, dtype=np.int32)
+    dummy_d = np.empty(0, dtype=np.float64)
+    ptr = np.zeros(n_src + 1, dtype=np.int64)
+    common = (
+        indptr,
+        indices,
+        weight,
+        src_ptr,
+        src_nodes,
+        src_off,
+        node_tgt_ptr,
+        node_tgt,
+        node_tgt_off,
+        n_targets,
+        cutoff,
+        exclude_self,
+    )
+    if n_src == 0:
+        return ptr, dummy_t, dummy_d
+    run(n_chunks, False, *common, counts, ptr, dummy_t, dummy_d)
+    np.cumsum(counts[:n_src], out=ptr[1:])
+    out_t = np.empty(int(ptr[-1]), dtype=np.int32)
+    out_d = np.empty(int(ptr[-1]), dtype=np.float64)
+    run(n_chunks, True, *common, counts, ptr, out_t, out_d)
     return ptr, out_t, out_d
 
 
