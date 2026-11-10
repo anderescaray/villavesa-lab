@@ -20,3 +20,10 @@ web/playwright-report/
 # misc
 .DS_Store
 *.log
+
+# validation tooling downloads
+validation/.cache/
+validation/.venv/
+validation/work/
+*.jar
+*.osm.pbf
