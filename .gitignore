@@ -1,0 +1,22 @@
+# data: raw downloads are reproducible via `make data`
+data/raw/*
+!data/raw/gtfs_tuc_pamplona.zip
+data/cache/
+# python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+# node
+node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+# misc
+.DS_Store
+*.log
