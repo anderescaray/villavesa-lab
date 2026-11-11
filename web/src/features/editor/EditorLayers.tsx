@@ -175,7 +175,12 @@ function addLayers(map: MlMap, theme: Theme, anchor: string | undefined) {
       type: 'line',
       source: SRC.stops,
       filter: ['==', ['geometry-type'], 'LineString'],
-      paint: { 'line-color': ink, 'line-width': 1.25, 'line-dasharray': [2, 2], 'line-opacity': 0.7 },
+      paint: {
+        'line-color': ink,
+        'line-width': 1.25,
+        'line-dasharray': [2, 2],
+        'line-opacity': 0.7,
+      },
     },
     anchor,
   );
@@ -378,7 +383,15 @@ function stopsGeoJSON(
     if (state === 'moved' && base) {
       const b = base.stopById.get(s.id);
       if (b && (b.lon !== s.lon || b.lat !== s.lat))
-        features.push(line([[b.lon, b.lat], [s.lon, s.lat]], { stop_id: s.id }));
+        features.push(
+          line(
+            [
+              [b.lon, b.lat],
+              [s.lon, s.lat],
+            ],
+            { stop_id: s.id },
+          ),
+        );
     }
     features.push(
       point([s.lon, s.lat], {
@@ -518,7 +531,20 @@ export function EditorLayers() {
       }
     }
     setGeoJSON(map, SRC.overlay, { type: 'FeatureCollection', features });
-  }, [map, styleVersion, model, active, tool, routeId, direction, corridor, draftGeo, drag, pending, theme]);
+  }, [
+    map,
+    styleVersion,
+    model,
+    active,
+    tool,
+    routeId,
+    direction,
+    corridor,
+    draftGeo,
+    drag,
+    pending,
+    theme,
+  ]);
 
   return null;
 }

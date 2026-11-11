@@ -61,12 +61,17 @@ export const useScenario = create<ScenarioState & ScenarioActions>()(
                 s.edits.map((e, i) => (i === index ? edit : e)),
               ),
         ),
-      remove: (index) => set((s) => commit(s, s.edits.filter((_, i) => i !== index))),
+      remove: (index) =>
+        set((s) =>
+          commit(
+            s,
+            s.edits.filter((_, i) => i !== index),
+          ),
+        ),
       clear: () => {
         if (get().edits.length) set((s) => ({ ...commit(s, []), name: '' }));
       },
-      setEdits: (edits, name) =>
-        set((s) => ({ ...commit(s, [...edits]), name: name ?? s.name })),
+      setEdits: (edits, name) => set((s) => ({ ...commit(s, [...edits]), name: name ?? s.name })),
       setName: (name) => set({ name }),
       undo: () =>
         set((s) => {

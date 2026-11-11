@@ -88,7 +88,9 @@ function fade(map: MlMap, slot: Slot, theme: Theme, on: boolean, stagger: boolea
 export function IsochroneLayers() {
   const { map, styleVersion } = useMapContext();
   const theme = useApp((st) => st.theme);
-  const origin = useApp((st) => (st.view === 'accessibility' || st.view === 'scenario' ? null : st.isoOrigin));
+  const origin = useApp((st) =>
+    st.view === 'accessibility' || st.view === 'scenario' ? null : st.isoOrigin,
+  );
   const { data } = useIsochroneResult();
   const active = useRef<Slot>('a');
   const shown = useRef<IsochroneResponse | null>(null);
@@ -137,7 +139,9 @@ export function IsochroneLayers() {
 /** The origin pin: an HTML marker (crisp at any DPI, CSS-animated drop). */
 function IsochronePin() {
   const { map } = useMapContext();
-  const origin = useApp((st) => (st.view === 'accessibility' || st.view === 'scenario' ? null : st.isoOrigin));
+  const origin = useApp((st) =>
+    st.view === 'accessibility' || st.view === 'scenario' ? null : st.isoOrigin,
+  );
   const markerRef = useRef<maplibregl.Marker | null>(null);
 
   useEffect(() => {

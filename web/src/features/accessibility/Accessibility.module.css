@@ -108,7 +108,7 @@
 .listHead,
 .catRow {
   display: grid;
-  grid-template-columns: 1fr 48px 56px;
+  grid-template-columns: 1fr 64px 60px;
   align-items: center;
   gap: var(--space-3);
 }

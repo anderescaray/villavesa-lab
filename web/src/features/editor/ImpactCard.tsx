@@ -87,7 +87,9 @@ export function ImpactCard() {
           </div>
         ) : null}
         {!d ? (
-          error ? null : <ImpactSkeleton />
+          error ? null : (
+            <ImpactSkeleton />
+          )
         ) : (
           <div className={s.impactBody} data-stale={stale}>
             <div className={s.people}>
@@ -151,7 +153,14 @@ export function ImpactCard() {
               {Object.entries(d.categories)
                 .sort((a, b) => Math.abs(b[1].pop_within) - Math.abs(a[1].pop_within))
                 .map(([id, c]) => (
-                  <CatRow key={id} label={poiLabel(t, id)} value={c.pop_within} share={c.share_within} fmt={fmtSigned} lang={lang} />
+                  <CatRow
+                    key={id}
+                    label={poiLabel(t, id)}
+                    value={c.pop_within}
+                    share={c.share_within}
+                    fmt={fmtSigned}
+                    lang={lang}
+                  />
                 ))}
             </div>
             {data.warnings.length ? (

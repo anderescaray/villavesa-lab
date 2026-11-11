@@ -138,7 +138,9 @@ export function buildAddRoute(
   const stops = rows.filter((r) => r.included);
   if (stops.length < 2 || draft.waypoints.length < 2) return null;
   // two consecutive identical stops are invalid; also drop exact duplicates
-  const seq = stops.filter((s, i) => i === 0 || distanceM([s.lon, s.lat], [stops[i - 1]!.lon, stops[i - 1]!.lat]) > 1);
+  const seq = stops.filter(
+    (s, i) => i === 0 || distanceM([s.lon, s.lat], [stops[i - 1]!.lon, stops[i - 1]!.lat]) > 1,
+  );
   return {
     type: 'add_route',
     route_id: newRouteId(draft.shortName, edits),

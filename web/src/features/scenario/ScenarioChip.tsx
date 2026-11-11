@@ -27,7 +27,11 @@ export function ScenarioChip() {
         style={{ border: 0, background: 'none', padding: 0 }}
         onClick={() => setView('scenario')}
       >
-        {peek ? t('editor.chip.baseline') : t('editor.chip.scenario', { n })}
+        {peek
+          ? t('editor.chip.baseline')
+          : n === 1
+            ? t('editor.chip.scenario1')
+            : t('editor.chip.scenario', { n })}
       </button>
       <IconButton
         size="sm"

@@ -126,7 +126,12 @@ export function ToolPalette() {
           : HINT[tool];
   return (
     <div className={s.palette}>
-      <Surface className={s.tools} role="toolbar" aria-label={t('editor.tools')} data-testid="tool-palette">
+      <Surface
+        className={s.tools}
+        role="toolbar"
+        aria-label={t('editor.tools')}
+        data-testid="tool-palette"
+      >
         {TOOLS.map((k) => {
           const Icon = TOOL_ICON[k];
           return (

@@ -133,7 +133,9 @@ export function EditorPanel() {
         </header>
         <p className={s.sub}>
           {edits.length
-            ? t('editor.changesCount', { n: edits.length })
+            ? edits.length === 1
+              ? t('editor.changesCount1')
+              : t('editor.changesCount', { n: edits.length })
             : t('editor.baselineNote')}
         </p>
         {edits.length ? <ChangeList /> : inspector ? null : <EntryPoints />}
@@ -152,12 +154,22 @@ function EntryPoints({ compact }: { compact?: boolean }) {
   const edits = useScenario((st) => st.edits);
   const base = useBaselineModel();
   const entries: { tool: Tool; title: string; body: string }[] = [
-    { tool: 'frequency', title: t('editor.entry.frequency'), body: t('editor.entry.frequencyBody') },
+    {
+      tool: 'frequency',
+      title: t('editor.entry.frequency'),
+      body: t('editor.entry.frequencyBody'),
+    },
     { tool: 'priority', title: t('editor.entry.priority'), body: t('editor.entry.priorityBody') },
     { tool: 'stop', title: t('editor.entry.stop'), body: t('editor.entry.stopBody') },
     { tool: 'draw', title: t('editor.entry.draw'), body: t('editor.entry.drawBody') },
   ];
-  const keys: Record<Tool, string> = { select: 'V', frequency: 'F', priority: 'P', stop: 'S', draw: 'L' };
+  const keys: Record<Tool, string> = {
+    select: 'V',
+    frequency: 'F',
+    priority: 'P',
+    stop: 'S',
+    draw: 'L',
+  };
   return (
     <section className={s.section} data-testid="editor-entries">
       {compact ? <div className={s.eyebrow}>{t('editor.addChange')}</div> : null}
@@ -211,7 +223,10 @@ function EditBadge({
 }) {
   const r = routeId ? model?.routeById.get(routeId) : undefined;
   if (badge) return <LineBadge size="sm" shortName={badge.shortName} color={badge.color} />;
-  if (r) return <LineBadge size="sm" shortName={r.short_name} color={r.color} textColor={r.text_color} />;
+  if (r)
+    return (
+      <LineBadge size="sm" shortName={r.short_name} color={r.color} textColor={r.text_color} />
+    );
   const Icon = fallback;
   return (
     <span className={s.glyph}>
@@ -285,13 +300,19 @@ function InlineEditor({ index, edit }: { index: number; edit: ScenarioEdit }) {
             value={edit.headway}
             onCommit={(h) => update(index, { ...edit, headway: h })}
           />
-          <PeriodControl value={edit.period} onChange={(p) => update(index, { ...edit, period: p })} />
+          <PeriodControl
+            value={edit.period}
+            onChange={(p) => update(index, { ...edit, period: p })}
+          />
         </div>
       );
     case 'speed_up':
       return (
         <div className={s.inline}>
-          <FactorControl value={edit.factor} onChange={(f) => update(index, { ...edit, factor: f })} />
+          <FactorControl
+            value={edit.factor}
+            onChange={(f) => update(index, { ...edit, factor: f })}
+          />
         </div>
       );
     case 'add_stop':
@@ -430,7 +451,10 @@ function FactorControl({ value, onChange }: { value: number; onChange: (f: numbe
         label={t('editor.priority.gain')}
         value={v}
         onChange={(f) => onChange(Number(f))}
-        options={FACTORS.map((f) => ({ value: f, label: `+${Math.round((Number(f) - 1) * 100)} %` }))}
+        options={FACTORS.map((f) => ({
+          value: f,
+          label: `+${Math.round((Number(f) - 1) * 100)} %`,
+        }))}
       />
     </div>
   );
@@ -474,7 +498,12 @@ function LinePicker({ hint }: { hint: string }) {
   return (
     <div className={s.field}>
       <span className={s.muted}>{hint}</span>
-      <div className={s.badgeGrid} role="group" aria-label={t('editor.pickLine')} data-testid="line-picker">
+      <div
+        className={s.badgeGrid}
+        role="group"
+        aria-label={t('editor.pickLine')}
+        data-testid="line-picker"
+      >
         {routes.map((r) => (
           <Tooltip key={r.id} content={displayName(r.long_name)}>
             <button
@@ -497,7 +526,12 @@ function LineHead({ route, onClose }: { route: Route; onClose: () => void }) {
   return (
     <div className={s.fieldRow}>
       <div className={s.lineHead}>
-        <LineBadge size="lg" shortName={route.short_name} color={route.color} textColor={route.text_color} />
+        <LineBadge
+          size="lg"
+          shortName={route.short_name}
+          color={route.color}
+          textColor={route.text_color}
+        />
         <span className={s.lineName}>{displayName(route.long_name)}</span>
       </div>
       <IconButton size="sm" label={t('editor.otherLine')} onClick={onClose}>
@@ -525,7 +559,9 @@ function FrequencyInspector() {
   const base = useBaselineModel();
   const { model } = useNetworkModel();
   const { data: ev, stale } = useLiveEvaluation();
-  const route = routeId ? (base?.routeById.get(routeId) ?? model?.routeById.get(routeId)) : undefined;
+  const route = routeId
+    ? (base?.routeById.get(routeId) ?? model?.routeById.get(routeId))
+    : undefined;
   if (!route) return <LinePicker hint={t('editor.freq.pick')} />;
   const current = headwayOf(route, period);
   const idx = headwayEditIndex(edits, route.id, period);
@@ -539,7 +575,9 @@ function FrequencyInspector() {
       <div className={s.compare}>
         <span>
           <span className={s.label}>{t('editor.freq.current')}</span>
-          <span className={s.compareValue}>{t('editor.freq.everyN', { min: formatMinutes(current, lang) })}</span>
+          <span className={s.compareValue}>
+            {t('editor.freq.everyN', { min: formatMinutes(current, lang) })}
+          </span>
         </span>
         <ArrowRight className={s.compareArrow} strokeWidth={1.5} />
         <span>
@@ -631,14 +669,21 @@ function PriorityInspector() {
   const { model } = useNetworkModel();
   const route = routeId ? model?.routeById.get(routeId) : undefined;
   const c = useMemo(
-    () => (route && corridor.start && corridor.end ? corridorOf(route, corridor.start, corridor.end, direction) : null),
+    () =>
+      route && corridor.start && corridor.end
+        ? corridorOf(route, corridor.start, corridor.end, direction)
+        : null,
     [route, corridor.start, corridor.end, direction],
   );
   if (!route || !model) return <LinePicker hint={t('editor.priority.pick')} />;
   const pattern = route.patterns.find((p) => p.direction === direction) ?? route.patterns[0];
-  const lengthM = c ? (c.pattern.stop_offsets[c.pattern.stop_ids.indexOf(c.stopIds[c.stopIds.length - 1]!)] ?? 0) - (c.pattern.stop_offsets[c.pattern.stop_ids.indexOf(c.stopIds[0]!)] ?? 0) : 0;
+  const lengthM = c
+    ? (c.pattern.stop_offsets[c.pattern.stop_ids.indexOf(c.stopIds[c.stopIds.length - 1]!)] ?? 0) -
+      (c.pattern.stop_offsets[c.pattern.stop_ids.indexOf(c.stopIds[0]!)] ?? 0)
+    : 0;
   const onStop = (id: string) => {
-    if (!corridor.start || corridor.end || id === corridor.start) setCorridor({ start: id, end: null });
+    if (!corridor.start || corridor.end || id === corridor.start)
+      setCorridor({ start: id, end: null });
     else if (corridorOf(route, corridor.start, id, direction)) setCorridor({ end: id });
     else setCorridor({ start: id, end: null });
   };
@@ -683,14 +728,20 @@ function PriorityInspector() {
                 className={s.stopItem}
                 data-in={inRange.has(id)}
                 onClick={() => onStop(id)}
-                style={{ color: isEnd ? model.mapColor(route.id, useApp.getState().theme) : undefined }}
+                style={{
+                  color: isEnd ? model.mapColor(route.id, useApp.getState().theme) : undefined,
+                }}
               >
                 <span className={s.dot} data-fill={isEnd} />
                 <span className={s.stopName} style={{ color: 'var(--text)' }}>
                   {st ? displayName(st.name) : id}
                 </span>
                 <span className={s.tag}>
-                  {id === corridor.start ? t('editor.priority.start') : id === corridor.end ? t('editor.priority.end') : ''}
+                  {id === corridor.start
+                    ? t('editor.priority.start')
+                    : id === corridor.end
+                      ? t('editor.priority.end')
+                      : ''}
                 </span>
               </button>
             </li>
@@ -771,7 +822,11 @@ function StopInspector() {
           />
         ) : null}
         <span className={far ? `${s.muted} ${s.error}` : s.muted}>
-          {far ? t('editor.stop.tooFar') : pending ? t('editor.stop.after', { stop: after ? displayName(after.name) : '' }) : t('editor.stop.addHint')}
+          {far
+            ? t('editor.stop.tooFar')
+            : pending
+              ? t('editor.stop.after', { stop: after ? displayName(after.name) : '' })
+              : t('editor.stop.addHint')}
         </span>
         {pending ? (
           <>
@@ -813,7 +868,11 @@ function StopInspector() {
     return (
       <div className={s.inspector}>
         <span className={s.muted}>{t('editor.stop.hint')}</span>
-        <Button variant="secondary" onClick={() => setEd({ addingStop: true })} data-testid="addstop-start">
+        <Button
+          variant="secondary"
+          onClick={() => setEd({ addingStop: true })}
+          data-testid="addstop-start"
+        >
           {t('editor.stop.addToLine')}
         </Button>
       </div>
@@ -841,7 +900,12 @@ function StopInspector() {
               aria-label={r.short_name}
               onClick={() => pick(routeId === id ? null : id)}
             >
-              <LineBadge size="sm" shortName={r.short_name} color={r.color} textColor={r.text_color} />
+              <LineBadge
+                size="sm"
+                shortName={r.short_name}
+                color={r.color}
+                textColor={r.text_color}
+              />
             </button>
           ) : null;
         })}
@@ -867,7 +931,9 @@ function StopInspector() {
               variant="secondary"
               onClick={() => add({ type: 'remove_stop', stop_id: stop.id, route_id: routeId })}
             >
-              {t('editor.stop.removeLine', { line: model.routeById.get(routeId)?.short_name ?? '' })}
+              {t('editor.stop.removeLine', {
+                line: model.routeById.get(routeId)?.short_name ?? '',
+              })}
             </Button>
           ) : null}
         </div>
@@ -911,7 +977,10 @@ function DrawInspector() {
         <Button
           variant="primary"
           onClick={() =>
-            startDraft(nextLineName(edits, base?.routes.map((r) => r.short_name) ?? []), palette[0]!)
+            startDraft(
+              nextLineName(edits, base?.routes.map((r) => r.short_name) ?? []),
+              palette[0]!,
+            )
           }
         >
           {t('editor.draw.start')}
@@ -978,7 +1047,10 @@ function DrawInspector() {
                   }}
                 >
                   <span className={s.dot} data-fill={r.included} />
-                  <span className={s.stopName} style={{ color: r.included ? 'var(--text)' : undefined }}>
+                  <span
+                    className={s.stopName}
+                    style={{ color: r.included ? 'var(--text)' : undefined }}
+                  >
                     {r.existing ? displayName(r.name) : r.name || t('editor.stop.unnamed')}
                   </span>
                   <span className={s.tag}>{r.existing ? '' : t('editor.draw.newTag')}</span>

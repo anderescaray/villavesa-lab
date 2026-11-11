@@ -233,6 +233,9 @@
 .numberInput:focus-within {
   border-color: var(--text);
 }
+.numberInput input:focus-visible {
+  box-shadow: none;
+}
 .numberInput input {
   width: 52px;
   height: 100%;
@@ -423,16 +426,16 @@
 .palette {
   position: absolute;
   top: var(--space-3);
-  left: calc(var(--map-left) + (100% - var(--map-left)) / 2);
+  left: calc(var(--map-left) + var(--space-3));
   z-index: var(--z-map-ui);
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
-  transform: translateX(-50%);
+  transition: left var(--dur-slow) var(--ease);
 }
 .tools {
   display: flex;
+  flex-direction: column;
   gap: 2px;
   padding: 4px;
 }
@@ -444,6 +447,7 @@
   padding: 0 var(--space-3);
   color: var(--text-secondary);
   font-size: var(--text-12);
+  margin-top: 2px;
   white-space: nowrap;
   animation: fadeIn var(--dur) var(--ease-out);
 }
@@ -627,4 +631,7 @@
   .toolHint {
     display: none;
   }
+}
+:global([data-panel='closed']) .palette {
+  left: calc(var(--map-left) + 64px);
 }

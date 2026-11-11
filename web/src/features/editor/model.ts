@@ -51,8 +51,7 @@ export function distanceM(a: LonLat, b: LonLat): number {
 
 export function cumulative(path: LonLat[]): number[] {
   const out = [0];
-  for (let i = 1; i < path.length; i++)
-    out.push(out[i - 1]! + distanceM(path[i - 1]!, path[i]!));
+  for (let i = 1; i < path.length; i++) out.push(out[i - 1]! + distanceM(path[i - 1]!, path[i]!));
   return out;
 }
 
@@ -209,7 +208,11 @@ export interface EditSummary {
 }
 
 const periodKey = (p: string | undefined) =>
-  p === 'peak' ? 'editor.period.peak' : p === 'offpeak' ? 'editor.period.offpeak' : 'editor.period.all';
+  p === 'peak'
+    ? 'editor.period.peak'
+    : p === 'offpeak'
+      ? 'editor.period.offpeak'
+      : 'editor.period.all';
 
 export function summarize(
   e: ScenarioEdit,

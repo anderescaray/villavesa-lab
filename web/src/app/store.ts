@@ -46,6 +46,8 @@ export interface AppState {
   accCategory: string;
   accMetric: AccMetric;
   accThreshold: number;
+  /** optimizer/compare draw their own network diff: the base network steps back */
+  diffActive: boolean;
 }
 
 export interface AppActions {
@@ -81,6 +83,7 @@ export const useApp = create<AppState & AppActions>()((set, get) => ({
   accCategory: 'hospital',
   accMetric: 'time',
   accThreshold: 1800,
+  diffActive: false,
 
   set: (patch) => set(patch),
   setView: (view) => set({ view }),

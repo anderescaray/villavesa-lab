@@ -194,7 +194,8 @@ export function NetworkLayers() {
   const direction = useApp((s) => s.selectedDirection);
   const selectedStop = useApp((s) => s.selectedStopId);
   // analysis views keep the network as quiet context: thin, low-contrast, no stops
-  const quiet = useApp((s) => s.view === 'accessibility' || s.view === 'scenario');
+  const diff = useApp((s) => s.diffActive);
+  const quiet = useApp((s) => s.view === 'accessibility' || s.view === 'scenario') || diff;
   const minute = useClockMinute();
 
   // 1) sources + layers (re-added after every style load)
@@ -224,7 +225,7 @@ export function NetworkLayers() {
     const dim = theme === 'dark' ? 0.22 : 0.16;
     const lineOpacity: ExpressionSpecification = highlight
       ? ['case', isVisible, dim, ['==', ['get', 'route_id'], highlight], dim, 0]
-      : ['case', isVisible, quiet ? (theme === 'dark' ? 0.5 : 0.55) : 0.92, 0];
+      : ['case', isVisible, diff ? 0 : quiet ? (theme === 'dark' ? 0.5 : 0.55) : 0.92, 0];
     setPaint(map, ROUTE_LAYERS.line, 'line-opacity', lineOpacity);
     setPaint(map, ROUTE_LAYERS.line, 'line-width', width(quiet ? 0.55 : 1));
     setPaint(
@@ -236,7 +237,7 @@ export function NetworkLayers() {
     const hlFilter: FilterSpecification = ['==', ['get', 'route_id'], highlight ?? '__none__'];
     setFilter(map, ROUTE_LAYERS.hlCasing, hlFilter);
     setFilter(map, ROUTE_LAYERS.hl, hlFilter);
-  }, [map, model, styleVersion, visibleKey, highlight, theme, quiet]);
+  }, [map, model, styleVersion, visibleKey, highlight, theme, quiet, diff]);
 
   // 3) stops of the selected line (and direction) + selected stop ring
   useEffect(() => {

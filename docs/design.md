@@ -26,8 +26,8 @@ truth for values is the code. This doc explains the choices behind them.
 5. **Motion explains state changes.** Durations are 150/200/250 ms with one easing. Isochrone
    bands reveal smallest first and crossfade when the origin moves. Numbers tween. All motion
    respects `prefers-reduced-motion`, and the clock also starts paused in that mode.
-6. **Honest UI.** Limitations from `/api/meta.data_notes` (mock data, gravity-model demand,
-   fleet estimate) are always one click away under *About the data*. The UI never renders an
+6. **Honest UI.** Limitations from `/api/meta.data_notes` (gravity-model demand, dasymetric
+   population, activity proxy, timetable-based times; translated by `key`) are always one click away under *About the data*. The UI never renders an
    unknown value as zero; it shows "—".
 
 ## Tokens
@@ -174,20 +174,54 @@ fixture), so the map is limited by GPU compositing, not JavaScript.
 ## Known gaps (design)
 
 - No corridor-aware line offsetting yet. Lines on shared streets overlap, ordered by frequency.
-- The mock isochrones (`web/mocks/`) are synthetic and visibly circular around stops. Their
-  shape quality depends on the real engine.
-- `data_notes` come from the API in English. They are not localised (see the proposed contract
-  change in the M6 report).
 
 ## Development
 
 ```bash
 cd web
 npm ci
-npm run fixtures        # build mock-API fixtures from data/raw/gtfs_tuc_pamplona.zip (git-ignored)
-npm run dev:mock        # http://localhost:3000 with the mock API (VITE_MOCK_API=1)
-npm run dev             # proxies /api to http://localhost:8000 (override with VITE_API_PROXY)
+npm run dev             # proxies /api to http://localhost:8000 (override with VITE_API_PROXY);
+                        # start the engine first: VLAB_SYNC_LOAD=1 uv run uvicorn vlab_api.main:app --port 8000
 npm run lint && npm run typecheck && npm test && npm run build
-npm run e2e -- --trace off   # Playwright, mock API + blank basemap (VITE_BASEMAP=none)
-npm run screenshots          # docs/screenshots/*.png
+npm run e2e -- --trace off   # Playwright: starts the REAL engine on :8100 + Vite with a blank basemap
+npm run screenshots          # docs/screenshots/*.png (real engine + real tiles; ONLY=08 to filter)
 ```
+
+## Accessibility view (M7)
+
+Question it answers: *who can reach what by bus today, and who is left out?*
+
+- **Window.** The clock sets the analysis time: its time snapped to the half hour is the
+  window start (one hour, departures every 10 min, mean travel time per D-006). The clock pauses
+  when the view opens and requests are debounced (250 ms) while scrubbing. The window is always
+  spelled out (`Laborable · 08:00–09:00`). Day type comes from the time bar; the threshold
+  (15/30/45/60 min) from the panel.
+- **Map.** The 1,794 cells are a MapLibre `fill` under the network, with colours in
+  `feature-state`. Two copies of the source (slots a/b) crossfade in 200 ms when the metric,
+  category, threshold or window changes. While the next window computes, the previous map stays
+  at 45 % opacity, so nothing flashes. Alpha is baked per cell from residents
+  (`residentWeight`: hidden at 0, floor 0.32, saturating at 400 residents), so empty fields
+  never dominate. Metrics (`features/accessibility/model.ts`):
+  - *time to nearest destination*: 7 sequential-blue steps of 10 min plus a neutral grey for
+    "> cap / unreachable". Short = most prominent: darkest on the light map, lightest on the dark
+    map (same convention as isochrones);
+  - *under-served*: neutral grey within the threshold, then the warm arm of the diverging palette
+    for +10 / +20 / more-or-unreachable (not the accent red);
+  - *activity in 30 min* (`jobs_30`) and *income per person* (equity context): sequential blue.
+  Bus lines stay as quiet context (55 % opacity, thinner, no stops, no animated buses, no
+  isochrones). POIs of the selected category are small ink dots with the name on hover. Cell
+  hover gives an outline plus a tooltip (municipality, residents, time to nearest, activity,
+  income).
+- **Legend.** A floating surface at the bottom left holds the metric selector, the units, the bin
+  edges and the opacity rule.
+- **Panel.** It reads top to bottom as a story. A headline sentence carries the key number
+  (animated, rounded to 100 people). A destination list follows, with a hairline bar, the share
+  within the threshold and the median time; clicking a row selects the category for the map and
+  charts, and essential categories are dotted. Next comes the cumulative curve (SVG, threshold
+  marked, value labelled in the empty quadrant). Then equity: quintile bars with the
+  overall-average tick, income ranges on hover, a plain-language reading of the concentration
+  index (±0.03 dead band) and the under-served population across essential categories. A
+  collapsed "About this analysis" holds the method and data notes.
+- **States.** Skeleton on the first load. The previous content is dimmed while refetching. On
+  error, an inline message with retry. While the engine is loading (502/503/504), queries retry
+  quietly every 1.5 s. URL keys: `cat`, `metric`, `thr` (minutes) next to `day` and `t`.

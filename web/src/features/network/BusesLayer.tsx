@@ -96,7 +96,7 @@ function render(st: BusRenderState) {
     return;
   }
   const { kinds, view } = useApp.getState();
-  if (view === 'accessibility') {
+  if (view === 'accessibility' || useApp.getState().diffActive) {
     // the analysis view is about the timetable as a whole: no moving buses competing with data
     deckRegistry.remove(BUS_LAYER_ID);
     deckRegistry.remove(HALO_LAYER_ID);
@@ -218,7 +218,11 @@ export function useBusesLayer() {
       ) {
         rebuildRouteColors(st);
         render(st);
-      } else if (s.kinds !== prev.kinds || s.view !== prev.view) {
+      } else if (
+        s.kinds !== prev.kinds ||
+        s.view !== prev.view ||
+        s.diffActive !== prev.diffActive
+      ) {
         render(st);
       }
     });
