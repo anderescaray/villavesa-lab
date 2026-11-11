@@ -33,7 +33,10 @@ export function CumulativeChart({
   const area = `${line.join('')}L${x(pts.at(-1)?.[0] ?? 0)},${y(0)}L${x(0)},${y(0)}Z`;
   const atThr = shareAt(curve, threshold);
   const thrX = x(threshold);
-  const thrRight = thrX > M.left + iw * 0.7;
+  // label in the empty quadrant: above-left while the curve is still rising, below-right once
+  // it has flattened near the top (below-left at the right edge)
+  const high = (atThr ?? 0) > 0.85;
+  const toLeft = !high || thrX > M.left + iw * 0.8;
   return (
     <svg
       className={s.chart}
@@ -71,9 +74,9 @@ export function CumulativeChart({
           <circle className={s.dot} cx={thrX} cy={y(atThr)} r={3.5} />
           <text
             className={s.thrLabel}
-            x={thrRight ? thrX - 8 : thrX + 8}
-            y={y(atThr) + (atThr > 0.85 ? 14 : -8)}
-            textAnchor={thrRight ? 'end' : 'start'}
+            x={toLeft ? thrX - 8 : thrX + 8}
+            y={y(atThr) + (high ? 16 : -8)}
+            textAnchor={toLeft ? 'end' : 'start'}
           >
             {formatPercent(atThr, lang)}
           </text>

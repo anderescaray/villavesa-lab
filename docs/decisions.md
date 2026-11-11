@@ -110,3 +110,47 @@ Each entry: context → options → choice → why.
   `PatternInfo.key` is the stable handle, not the pattern index.
 - **No range-RAPTOR**: plain RAPTOR x K departures computes the full 1,794-zone
   matrix in ~0.4 s, well inside the "recompute in seconds" budget.
+
+## D-011 Headway is a mean, not a median
+
+- **Context**: lines with branches and short-turn variants (L4 has five) have
+  bimodal gaps; the median gap (240 s on L4) says little about service level
+  and is not something an edit can target.
+- **Choice**: headway = period length / trips started in the period, busiest
+  direction, all patterns pooled (`vlab.gtfs.stats.mean_headways`). It is what
+  the UI shows and what `set_headway` targets.
+
+## D-012 One engine lock
+
+- **Context**: FastAPI runs sync endpoints in a thread pool and numba's default
+  threading layer cannot be entered from several Python threads at once (the
+  test suite hung when two threads did).
+- **Choice**: every compute entry point runs under one process-wide lock; the
+  kernels already use all cores, so serialising requests costs nothing.
+  Optimizer jobs take the lock per evaluation, so the API stays responsive
+  while a job runs.
+
+## D-013 Optimizer design
+
+- **Options**: (a) pure metaheuristic over everything; (b) exact MILP on a
+  linearised model only; (c) MILP for the part that is nearly separable
+  (frequencies) + real-router verification and local search + ALNS for line
+  design, which is combinatorial and not separable.
+- **Choice**: (c). The waiting-time law gives a principled, cheap benefit model
+  (two router evaluations per line), CP-SAT solves the knapsack exactly, and the
+  router remains the judge: every accepted move is measured, and the final
+  proposal is re-evaluated on all zones. Details in `docs/engine.md`.
+
+## D-014 Reference router for validation
+
+- **Choice**: OpenTripPlanner 2.8.1 (the newest release that runs on the
+  available Java 21) rather than r5py. Same GTFS and OSM extract, independent
+  street graph and routing code. Results and reproduction in
+  `docs/validation.md`.
+
+## D-015 End-to-end tests run against the real API
+
+- **Context**: the web app was first built against a mock while the backend was
+  written. Keeping a mock means keeping two implementations of the contract.
+- **Choice**: the mock is deleted; Playwright starts the real API and the web
+  dev server, locally and in CI.

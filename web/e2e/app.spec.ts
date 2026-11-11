@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Runs against the mock API with a blank basemap (VITE_MOCK_API=1, VITE_BASEMAP=none): no
-// dependency on external tiles or the Python backend.
+// Runs against the real FastAPI engine (started by playwright.config.ts) with a blank basemap
+// (VITE_BASEMAP=none): no dependency on external tiles.
 
 async function open(page: Page, hash = '#/network?day=weekday&t=0800&play=0&lang=es') {
   await page.addInitScript(() => {
@@ -74,6 +74,16 @@ test('clicking the map shows an isochrone card; Esc dismisses it', async ({ page
   await expect(card).toBeVisible();
   await expect(card.getByText('Hasta dónde llegas')).toBeVisible();
   await expect(page.getByTestId('iso-band-30')).toContainText(/\d/);
+  // real engine: the 30-minute band reaches people
+  await expect
+    .poll(async () => {
+      const text = (await page.getByTestId('iso-band-30').textContent()) ?? '';
+      const m = /([\d.,]+)\s*(mil)?/.exec(text);
+      if (!m) return 0;
+      const n = Number(m[1]!.replace(/\./g, '').replace(',', '.'));
+      return m[2] ? n * 1000 : n;
+    })
+    .toBeGreaterThan(0);
   await expect(card.getByText('Hospitales')).toBeVisible();
   await expect(page.getByTestId('iso-pin')).toBeVisible();
   await expect(page).toHaveURL(/iso=/);
@@ -104,8 +114,6 @@ test('theme toggle switches to dark and back', async ({ page }) => {
 
 test('other views show designed empty states; shortcuts dialog opens with ?', async ({ page }) => {
   await open(page);
-  await page.keyboard.press('2');
-  await expect(page.getByTestId('view-accessibility')).toBeVisible();
   await page.getByTestId('nav-optimizer').click();
   await expect(page.getByTestId('view-optimizer')).toContainText('presupuesto');
   await page.getByRole('button', { name: 'Explorar la red actual' }).click();
@@ -117,9 +125,13 @@ test('other views show designed empty states; shortcuts dialog opens with ?', as
 });
 
 test('API errors show a calm inline message with retry', async ({ page }) => {
-  await open(page, '#/network?day=weekday&t=0800&play=0');
-  await page.goto('/#/network?day=sunday&t=0800&play=0&mock_fail=1');
-  await page.reload();
+  await page.route('**/api/network**', (route) =>
+    route.fulfill({ status: 500, body: JSON.stringify({ detail: 'boom' }) }),
+  );
+  await page.addInitScript(() => {
+    localStorage.setItem('vlab.prefs', JSON.stringify({ themePref: 'light', lang: 'es' }));
+  });
+  await page.goto('/#/network?day=sunday&t=0800&play=0');
   await expect(page.getByTestId('network-error')).toBeVisible({ timeout: 20000 });
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible();
 });

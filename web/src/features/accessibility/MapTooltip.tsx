@@ -50,7 +50,7 @@ export function CellTooltip({
           <span className={s.tipDot} data-ok={within} aria-hidden />
           {time === null ? t('acc.unreachable') : formatDuration(time)}
         </dd>
-        <dt>{t('acc.tipJobs')}</dt>
+        <dt>{t('acc.metric.jobs')}</dt>
         <dd>{formatPercent(jobs, lang)}</dd>
         <dt>{t('acc.tipIncome')}</dt>
         <dd>{income === null ? '—' : formatCurrency(income, lang)}</dd>
