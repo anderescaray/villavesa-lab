@@ -26,7 +26,7 @@ for the reasoning behind choices.
 | M11 | Router validation against OpenTripPlanner                                  | done   | #2  |
 | M12 | Docker compose, e2e tests, screenshots, demo GIF                           | done   | #2  |
 | M13 | README (portfolio grade), findings with real numbers                       | done   | #2  |
-| M14 | Design-review fixes (independent critique of the final screenshots)        | wip    | #3  |
+| M14 | Design-review fixes (independent critique of the final screenshots)        | done   | #3  |
 
 M1-M13 landed in one squash-merged PR instead of one PR each: the session could
 only push to one branch and was interrupted repeatedly, so milestones were
@@ -41,10 +41,19 @@ against the real API). `docker compose up` was verified: both images build, the
 stack serves the app on :3000 through nginx, and the API image built from a
 clean clone of `main` comes up healthy in ~25 s.
 
-In progress (PR #3): fixes from an independent design review of the final
-screenshots: trade-off chart labels and tooltip, translated engine warnings,
-compare side labels, tablet isochrone card, new-line rows in the optimizer
-result, sticky footer in the draw-line inspector, one shared number formatter.
+An independent design review of the final screenshots found seven must-fix
+issues; they were fixed in PR #3 (trade-off chart labels and tooltip, translated
+engine warnings, compare side labels, new-line rows in the optimizer result,
+sticky footer in the draw-line inspector, one shared number formatter, tablet
+card gutter). Left from that review as polish: a narrower sparkline column in
+the line list, a fixed legend height in the accessibility view, spacing of the
+editor's top chips.
+
+Not verified, stated plainly: the web image could not be rebuilt from the clean
+clone because Docker Hub rate-limited the base-image pull (the same Dockerfile
+and sources built and ran earlier in the session); the translated warnings and
+the new-line row layout are covered by unit tests / code only, not seen on
+screen; the tablet layout was checked in headless Chromium only.
 
 Possible next steps, none required for the finish line: a hover tooltip on the
 delta maps; per-direction stop lists for new bidirectional lines (the engine
