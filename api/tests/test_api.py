@@ -264,3 +264,75 @@ def test_helpers() -> None:
     for k in (1, 2, 1, 3, 2):
         cache.get(k, lambda k=k: calls.append(k) or k)
     assert calls == [1, 2, 3, 2] and cache.hits == 1
+
+
+# ------------------------------------------------------------- optimizer + report
+
+
+def _wait(client: TestClient, job_id: str, timeout_s: float = 240.0) -> dict[str, Any]:
+    import time
+
+    t0 = time.time()
+    while time.time() - t0 < timeout_s:
+        j = client.get(f"/api/optimize/{job_id}").json()
+        if j["status"] in ("done", "error"):
+            return j
+        time.sleep(0.5)
+    raise AssertionError("optimizer job did not finish")
+
+
+def test_optimize_job_improves_accessibility_within_budget(client: TestClient) -> None:
+    job_id = post(client, "/api/optimize", {"moves": ["frequency"], "time_limit_s": 30})["job_id"]
+    first = client.get(f"/api/optimize/{job_id}").json()
+    assert first["status"] in ("queued", "running", "done") and 0 <= first["progress"] <= 1
+    j = _wait(client, job_id)
+    assert j["status"] == "done", j["error"]
+    assert j["progress"] == 1.0 and j["log"] and j["history"]
+    res = j["result"]
+    assert res["objective"]["optimized"] > res["objective"]["baseline"]
+    assert res["budget"]["used"] <= res["budget"]["value"]
+    ev = res["evaluation"]
+    assert ev["delta"]["fleet"] <= 0 and ev["delta"]["objective"] > 0
+    assert all(e["type"] == "scale_frequency" for e in res["scenario"])
+    assert res["explanation"] and {e["text_key"] for e in res["explanation"]} <= {
+        "frequency_up",
+        "frequency_down",
+    }
+    # the proposal is directly usable in every other endpoint
+    net = post(client, "/api/network", {"scenario": res["scenario"]})
+    assert any(r["modified"] for r in net["routes"])
+
+
+def test_tradeoff_curve_is_monotone(client: TestClient) -> None:
+    base = client.get("/api/network").json()["totals"]["fleet"]
+    values = [base - 20, base, base + 20]
+    job_id = post(client, "/api/optimize/tradeoff", {"values": values})["job_id"]
+    j = _wait(client, job_id)
+    assert j["status"] == "done", j["error"]
+    pts = j["result"]["points"]
+    assert [p["budget"] for p in pts] == values
+    assert all(p["used"] <= p["budget"] for p in pts)
+    objs = [p["objective"] for p in pts]
+    assert objs == sorted(objs)
+    assert pts[1]["objective"] >= j["result"]["baseline"]["objective"]
+
+
+def test_optimize_validation_and_unknown_job(client: TestClient) -> None:
+    post(client, "/api/optimize", {"moves": []}, 422)
+    post(client, "/api/optimize", {"moves": ["teleport"]}, 422)
+    post(client, "/api/optimize", {"base_scenario": [{"type": "nope"}]}, 422)
+    assert client.get("/api/optimize/nope").status_code == 404
+
+
+def test_report_html(client: TestClient) -> None:
+    for lang, word in (("es", "Resumen"), ("en", "Summary")):
+        r = client.post(
+            "/api/report",
+            json={"scenario": L4_FASTER, "lang": lang, "title": "Refuerzo <L4>"},
+        )
+        assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
+        page = r.text
+        assert word in page and "Refuerzo &lt;L4&gt;" in page and "<svg" in page
+        assert "<script" not in page and "L04" in page
+    empty = client.post("/api/report", json={"scenario": []})
+    assert empty.status_code == 200 and "no modifica" in empty.text

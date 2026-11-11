@@ -3,6 +3,7 @@ import './styles/global.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { isEngineLoading } from '@/api/client';
 import { App } from '@/app/App';
 import { loadPrefs, resolveTheme } from '@/app/preferences';
 import { useApp } from '@/app/store';
@@ -13,8 +14,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 2,
-      retryDelay: (n) => Math.min(4000, 800 * 2 ** n),
+      // while the engine is still loading (503 / proxy not ready) keep polling quietly: the
+      // views show their skeletons, never an error
+      retry: (count, err) => isEngineLoading(err) || count < 2,
+      retryDelay: (n, err) => (isEngineLoading(err) ? 1500 : Math.min(4000, 800 * 2 ** n)),
     },
   },
 });

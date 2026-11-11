@@ -16,8 +16,10 @@ export interface AnalysisWindow {
 
 // ---------------------------------------------------------------- meta
 
+/** `loading` while the engine is still building its graphs (the API then answers 503). */
 export interface Health {
-  status: 'ok';
+  status: 'ok' | 'loading' | 'error';
+  detail?: string | null;
 }
 
 export interface PoiCategoryCount {
@@ -39,6 +41,7 @@ export interface Meta {
     end_date: string;
     n_routes: number;
     n_stops: number;
+    n_stops_served_weekday: number;
   };
   days: Record<DayType, string>;
   bbox: [number, number, number, number];
@@ -48,7 +51,15 @@ export interface Meta {
   poi_categories: PoiCategoryCount[];
   default_window: AnalysisWindow;
   cost_params: CostParams;
-  data_notes: string[];
+  /** Categories whose lack of access counts as under-served (hospital, health centre, centre) */
+  essential_categories: string[];
+  data_notes: DataNote[];
+}
+
+/** `key` is translated by the UI (`note.<key>`); `text` is the English fallback. */
+export interface DataNote {
+  key: string;
+  text: string;
 }
 
 // ---------------------------------------------------------------- scenario edits
@@ -103,6 +114,8 @@ export interface RouteStats {
   last_dep: number;
   headway_peak: number | null;
   headway_offpeak: number | null;
+  /** mean all-day headway of the busiest direction */
+  headway: number | null;
   length_km: number;
   run_time: number;
   speed_kmh: number;
@@ -146,9 +159,12 @@ export interface NetworkTotals {
 }
 
 export interface Network {
+  day: DayType;
   routes: Route[];
   stops: Stop[];
+  removed_routes: string[];
   totals: NetworkTotals;
+  warnings: string[];
 }
 
 export interface NetworkRequest {
@@ -167,11 +183,14 @@ export interface VehicleShape {
 export interface VehicleTrip {
   route: string;
   shape: number;
+  headsign: string;
+  direction: number;
   t: number[];
   d: number[];
 }
 
 export interface Vehicles {
+  day: DayType;
   shapes: VehicleShape[];
   trips: VehicleTrip[];
 }
@@ -205,6 +224,7 @@ export interface Isochrone {
 
 export interface IsochroneResponse {
   origin: LonLat;
+  mode: IsochroneMode;
   isochrones: Isochrone[];
   reached_stops: { id: string; time: number }[];
 }
@@ -265,6 +285,10 @@ export interface Accessibility {
     population: number[];
     time: Record<string, (number | null)[]>;
     jobs_30: number[];
+    /** demand-weighted accessibility index 0..1 */
+    access_index: number[];
+    /** demand-weighted mean travel time to destinations (s); null when nothing is reachable */
+    mean_time: (number | null)[];
     income: (number | null)[];
     section_id: string[];
   };
@@ -279,13 +303,96 @@ export interface Accessibility {
     }[];
     concentration_index: Record<string, number>;
   };
-  summary: { mean_travel_time: number; underserved_population: number };
+  summary: {
+    mean_travel_time: number;
+    underserved_population: number;
+    objective: number;
+    jobs_30_mean: number;
+  };
 }
 
+export interface ZoneProps {
+  id: number;
+  population: number;
+  municipality?: string;
+}
+export type ZonesGeoJSON = GeoJSON.FeatureCollection<GeoJSON.Polygon, ZoneProps>;
+
+export interface SectionProps {
+  section_id: string;
+  municipality: string;
+  population: number;
+  income_per_capita: number | null;
+  income_per_household: number | null;
+}
+export type SectionsGeoJSON = GeoJSON.FeatureCollection<GeoJSON.Geometry, SectionProps>;
+
 export interface Poi {
-  id: string;
+  id: number;
   category: string;
   name: string;
   lon: number;
   lat: number;
+}
+
+// ---------------------------------------------------------------- scenario evaluation (M8)
+
+export interface CategoryKpi {
+  pop_within: number;
+  share_within: number;
+  mean_time: number | null;
+}
+
+export interface Kpis {
+  fleet: number;
+  bus_hours: number;
+  km: number;
+  cost_eur_day: number;
+  cost_eur_year: number;
+  mean_travel_time: number;
+  objective: number;
+  underserved_population: number;
+  jobs_30_mean: number;
+  categories: Record<string, CategoryKpi>;
+}
+
+export interface EvaluateRequest {
+  scenario: Edit[];
+  window: AnalysisWindow;
+  threshold: number;
+}
+
+export interface Evaluation {
+  valid: boolean;
+  warnings: string[];
+  baseline: Kpis;
+  scenario: Kpis;
+  delta: {
+    fleet: number;
+    bus_hours: number;
+    km: number;
+    cost_eur_day: number;
+    cost_eur_year: number;
+    mean_travel_time: number;
+    objective: number;
+    objective_pct: number;
+    underserved_population: number;
+    people_gaining: number;
+    people_losing: number;
+    categories: Record<string, { pop_within: number; share_within: number }>;
+  };
+  zones: {
+    id: number[];
+    delta_time: (number | null)[];
+    delta_jobs_30: number[];
+    delta_access_index: number[];
+  };
+  routes: {
+    id: string;
+    fleet: [number, number];
+    bus_hours: [number, number];
+    headway_peak: [number | null, number | null];
+    trips: [number, number];
+  }[];
+  elapsed_ms: number;
 }

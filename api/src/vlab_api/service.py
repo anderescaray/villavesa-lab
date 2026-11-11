@@ -35,14 +35,17 @@ from vlab.gtfs.geometry import cumulative_length
 from vlab.gtfs.stats import mean_headways
 from vlab.gtfs.timetable import Timetable
 from vlab.model.world import DAY_TYPES, ESSENTIAL_CATEGORIES, Model, NetworkState, Window
+from vlab.optimize import Budget, Optimizer, Progress
 from vlab.scenario import (
     Edit,
     ScenarioNetwork,
     apply,
+    edit_to_dict,
     nearby_stops,
     scenario_hash,
     snap_path,
 )
+from vlab_api import report
 
 T = TypeVar("T")
 F = TypeVar("F", bound=Callable[..., Any])
@@ -119,7 +122,12 @@ class LRU:
                 if key in self._data:
                     self.hits += 1
                     return self._data[key]  # type: ignore[no-any-return]
-            value = compute()
+            try:
+                value = compute()
+            except BaseException:
+                with self._lock:
+                    self._key_locks.pop(key, None)
+                raise
             with self._lock:
                 self.misses += 1
                 self._data[key] = value
@@ -380,13 +388,23 @@ class Service:
             sid, length = shape_of[key]
             span = float(off[-1] - off[0])
             d = np.round((off - off[0]) * (length / span if span > 0 else 0.0), 1).tolist()
-            route = tt.routes[tt.patterns[p].route_idx].route_id
+            info = tt.patterns[p]
+            route = tt.routes[info.route_idx].route_id
             arr = tt.arrivals(p)
             dep0 = tt.departures(p)[:, 0]
             for k in range(n):
                 t = arr[k].tolist()
                 t[0] = int(dep0[k])
-                trips.append({"route": route, "shape": sid, "t": t, "d": d})
+                trips.append(
+                    {
+                        "route": route,
+                        "shape": sid,
+                        "headsign": info.headsign,
+                        "direction": int(info.direction),
+                        "t": t,
+                        "d": d,
+                    }
+                )
         trips.sort(key=lambda tr: tr["t"][0])
         return {"day": day, "shapes": shapes, "trips": trips}
 
@@ -533,15 +551,12 @@ class Service:
         }
 
     # -------------------------------------------------------------------- static
-    @locked
     def zones_geojson(self) -> bytes:
         return self._static_json("zones", self._zones_geojson)
 
-    @locked
     def sections_geojson(self) -> bytes:
         return self._static_json("sections", self._sections_geojson)
 
-    @locked
     def pois(self) -> bytes:
         return self._static_json("pois", self._pois)
 
@@ -751,6 +766,131 @@ class Service:
             "routes": routes,
             "elapsed_ms": round(1000 * (time.perf_counter() - t0)),
         }
+
+
+# ---------------------------------------------------------------- optimizer + report
+
+
+def run_optimize(
+    svc: Service,
+    progress: Progress,
+    *,
+    window: Window,
+    budget: Budget,
+    moves: tuple[str, ...],
+    objective: str,
+    base_edits: tuple[Edit, ...],
+    seed: int,
+    time_limit_s: float,
+    threshold: int,
+) -> dict[str, Any]:
+    """Body of an optimizer job: runs outside the request, taking ENGINE_LOCK only
+    around each engine call so that other requests stay responsive."""
+    ev = svc.evaluator(window)
+    opt = Optimizer(
+        svc.model,
+        ev,
+        base_edits=base_edits,
+        objective=objective,  # type: ignore[arg-type]
+        seed=seed,
+        lock=ENGINE_LOCK,
+        progress=progress,
+    )
+    res = opt.run(budget, moves, time_limit_s)  # type: ignore[arg-type]
+    evaluation = svc.evaluate(res.edits, window, threshold)
+    return {
+        "scenario": res.scenario,
+        "evaluation": evaluation,
+        "explanation": [
+            {
+                "kind": e.kind,
+                "route_id": e.route_id,
+                "text_key": e.text_key,
+                "params": e.params,
+                "delta_objective": round(e.delta_objective, 6),
+            }
+            for e in res.explanation
+        ],
+        "objective": {
+            "baseline": round(res.baseline.objective, 6),
+            "optimized": round(res.optimized.objective, 6),
+            "change_pct": num(100.0 * (res.optimized.objective / res.baseline.objective - 1.0), 2)
+            if res.baseline.objective
+            else None,
+        },
+        "budget": {"kind": res.budget_kind, "value": res.budget, "used": res.used},
+        "elapsed_s": round(res.elapsed_s, 1),
+    }
+
+
+def run_tradeoff(
+    svc: Service,
+    progress: Progress,
+    *,
+    window: Window,
+    budget_kind: str,
+    values: list[float],
+    seed: int,
+) -> dict[str, Any]:
+    ev = svc.evaluator(window)
+    opt = Optimizer(svc.model, ev, seed=seed, lock=ENGINE_LOCK, progress=progress)
+    points = opt.tradeoff(budget_kind, values)  # type: ignore[arg-type]
+    with ENGINE_LOCK:
+        base = svc.evaluation((), window)
+    assert base.summary is not None
+    used = float(base.cost.fleet if budget_kind == "fleet" else base.cost.bus_hours)
+    return {
+        "budget_kind": budget_kind,
+        "points": [
+            {
+                "budget": p.budget,
+                "used": p.used,
+                "objective": round(p.objective, 6),
+                "objective_pct": num(100.0 * (p.objective / base.objective - 1.0), 2),
+                "mean_travel_time": num(p.mean_travel_time, 1),
+                "share_within": {c: round(v, 4) for c, v in p.share_within.items()},
+                "scenario": p.scenario,
+            }
+            for p in points
+        ],
+        "baseline": {
+            "budget": used,
+            "objective": round(base.objective, 6),
+            "mean_travel_time": num(base.mean_travel_time, 1),
+            "share_within": {
+                c: round(ca.share_within, 4) for c, ca in base.summary.categories.items()
+            },
+        },
+    }
+
+
+def render_report(
+    svc: Service, edits: tuple[Edit, ...], window: Window, threshold: int, lang: str, title: str
+) -> str:
+    evaluation = svc.evaluate(edits, window, threshold)
+    net = svc.network(edits, window.day)
+    base_net = svc.network((), window.day)
+    names = {r["id"]: r["short_name"] for r in base_net["routes"] + net["routes"]}
+    colors = {r["id"]: r["color"] for r in base_net["routes"] + net["routes"]}
+    stops = {s["id"]: s["name"] for s in base_net["stops"] + net["stops"]}
+    paths = [(r["id"], p["path"]) for r in net["routes"] for p in r["patterns"][:1]]
+    m = svc.model
+    return report.render(
+        title=title,
+        lang=lang,
+        window={"day": window.day, "start": window.start, "duration": window.duration},
+        threshold=threshold,
+        evaluation=evaluation,
+        edits=[edit_to_dict(e) for e in edits],
+        route_names=names,
+        route_colors=colors,
+        stop_names=stops,
+        zone_lon=m.zone_lon,
+        zone_lat=m.zone_lat,
+        population=m.population,
+        paths=paths,
+        date=m.dates[window.day].isoformat(),
+    )
 
 
 def _totals(cost: NetworkCost) -> dict[str, Any]:

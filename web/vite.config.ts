@@ -1,19 +1,15 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig, loadEnv, type PluginOption } from 'vite';
-import { mockApi } from './mocks/mock-api';
+import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env };
-  const useMock = env.VITE_MOCK_API === '1';
   const apiTarget = env.VITE_API_PROXY ?? 'http://localhost:8000';
-  const plugins: PluginOption[] = [react()];
-  if (useMock) plugins.push(mockApi());
-  const proxy = useMock ? undefined : { '/api': { target: apiTarget, changeOrigin: true } };
+  const proxy = { '/api': { target: apiTarget, changeOrigin: true } };
 
   return {
-    plugins,
+    plugins: [react()],
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     server: { port: 3000, strictPort: true, host: true, proxy },
     preview: { port: 3000, strictPort: true, host: true, proxy },

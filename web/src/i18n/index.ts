@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useApp } from '@/app/store';
+import type { DataNote } from '@/api/types';
 import { dictionaries, type Lang, type MessageKey } from './dict';
 
 export type { Lang, MessageKey } from './dict';
@@ -29,4 +30,10 @@ export const isMessageKey = (k: string): k is MessageKey => k in dictionaries.es
 export function poiLabel(t: TFunction, id: string): string {
   const key = `poi.${id}`;
   return isMessageKey(key) ? t(key) : id.replace(/_/g, ' ');
+}
+
+/** A data limitation from `/api/meta.data_notes`, translated by key (English API text fallback). */
+export function noteText(t: TFunction, note: DataNote): string {
+  const key = `note.${note.key}`;
+  return isMessageKey(key) ? t(key) : note.text;
 }

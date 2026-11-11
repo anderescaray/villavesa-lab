@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useApp } from '@/app/store';
 import { ToastRegion, TooltipProvider } from '@/components/ui';
+import { AccessibilityLayers } from '@/features/accessibility/AccessibilityLayers';
+import { AccessibilityLegend } from '@/features/accessibility/AccessibilityLegend';
 import { IsochroneCard } from '@/features/isochrone/IsochroneCard';
 import { IsochroneLayers } from '@/features/isochrone/IsochroneLayers';
 import { BusesLayer } from '@/features/network/BusesLayer';
@@ -73,6 +75,7 @@ export function App({ initial }: { initial: UrlState }) {
       <div className={s.app} data-panel={panelOpen ? 'open' : 'closed'}>
         <MapCanvas>
           <NetworkLayers />
+          <AccessibilityLayers />
           <IsochroneLayers />
           <BusesLayer />
           <MapInteractions />
@@ -82,6 +85,7 @@ export function App({ initial }: { initial: UrlState }) {
           <PanelToggle />
           <TopControls />
           <IsochroneCard />
+          <AccessibilityLegend />
           <MapControls />
           <TimeControl />
         </MapCanvas>

@@ -1,6 +1,7 @@
 import { PanelLeftClose } from 'lucide-react';
 import { useApp } from '@/app/store';
 import { IconButton } from '@/components/ui';
+import { AccessibilityPanel } from '@/features/accessibility/AccessibilityPanel';
 import { NetworkPanel } from '@/features/network/NetworkPanel';
 import { PlannedView } from '@/features/views/PlannedView';
 import { useT } from '@/i18n';
@@ -29,6 +30,8 @@ export function SidePanel() {
       <div className={s.panelBody}>
         {view === 'network' ? (
           <NetworkPanel />
+        ) : view === 'accessibility' ? (
+          <AccessibilityPanel />
         ) : (
           <div className={s.panelScroll}>
             <PlannedView view={view} />

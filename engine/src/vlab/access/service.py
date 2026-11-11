@@ -252,7 +252,12 @@ class Evaluator:
         t = tt.astype(np.float32)
         t[tt == UNREACHABLE] = 7200.0
         den = w.sum(axis=1, dtype=np.float64)
-        zone_mean = np.divide(
-            (w * t).sum(axis=1, dtype=np.float64), den, out=np.zeros_like(den), where=den > 0
+        ok = den > 0
+        zone_mean = (w[ok] * t[ok]).sum(axis=1, dtype=np.float64) / den[ok]
+        # a full "sample" is not a sample: weight by residents like the exact evaluation
+        full = len(origins) >= int((self.model.population > 0).sum())
+        pop = self.model.population[origins] if full else np.ones(len(origins))
+        return (
+            float(np.average(hansen, weights=pop)),
+            float(np.average(zone_mean, weights=pop[ok])) if ok.any() else float("nan"),
         )
-        return float(hansen.mean()), float(zone_mean.mean())

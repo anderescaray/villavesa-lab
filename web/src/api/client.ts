@@ -1,8 +1,7 @@
-/**
- * The only module that talks HTTP. Every endpoint of docs/api.md the UI uses goes through here,
- * so switching from the mock to the real backend is a no-op.
- */
+/** The only module that talks HTTP. Every endpoint of docs/api.md the UI uses goes through here. */
 import type {
+  Accessibility,
+  AccessibilityRequest,
   Health,
   IsochroneRequest,
   IsochroneResponse,
@@ -10,11 +9,17 @@ import type {
   Network,
   NetworkRequest,
   Poi,
+  ZonesGeoJSON,
+  SectionsGeoJSON,
   Vehicles,
   VehiclesRequest,
 } from './types';
 
 const BASE = '/api';
+
+/** The engine is still starting (proxy or API not ready): callers retry quietly. */
+export const isEngineLoading = (err: unknown) =>
+  err instanceof ApiError && [0, 502, 503, 504].includes(err.status);
 
 export class ApiError extends Error {
   readonly status: number;
@@ -25,15 +30,6 @@ export class ApiError extends Error {
   }
 }
 
-function extraHeaders(): Record<string, string> {
-  // Dev-only failure injection for the mock API (designing error states): add ?mock_fail=1.
-  if (import.meta.env.DEV && typeof window !== 'undefined') {
-    const q = window.location.hash.split('?')[1] ?? '';
-    if (new URLSearchParams(q).get('mock_fail') === '1') return { 'x-mock-fail': '1' };
-  }
-  return {};
-}
-
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let res: Response;
   try {
@@ -42,7 +38,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: {
         Accept: 'application/json',
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...extraHeaders(),
         ...init.headers,
       },
     });
@@ -77,5 +72,9 @@ export const api = {
     post<Vehicles>('/vehicles', body, signal),
   isochrone: (body: IsochroneRequest, signal?: AbortSignal) =>
     post<IsochroneResponse>('/isochrone', body, signal),
+  accessibility: (body: AccessibilityRequest, signal?: AbortSignal) =>
+    post<Accessibility>('/accessibility', body, signal),
+  zones: (signal?: AbortSignal) => request<ZonesGeoJSON>('/zones', { signal }),
+  sections: (signal?: AbortSignal) => request<SectionsGeoJSON>('/sections', { signal }),
   pois: (signal?: AbortSignal) => request<{ pois: Poi[] }>('/pois', { signal }),
 };

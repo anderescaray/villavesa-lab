@@ -17,9 +17,12 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse, Response
 from pydantic import BaseModel, Field
 
+from vlab.access.isochrone import OriginError
 from vlab.model.world import Model, Window
+from vlab.optimize import Budget
 from vlab.scenario import Edit, ScenarioError, parse_edits
-from vlab_api.service import ENGINE_LOCK, Service
+from vlab_api.jobs import JobManager
+from vlab_api.service import ENGINE_LOCK, Service, render_report, run_optimize, run_tradeoff
 
 log = logging.getLogger("vlab_api")
 
@@ -147,8 +150,8 @@ async def scenario_error(_: Request, exc: ScenarioError) -> ORJSONResponse:
     return ORJSONResponse({"detail": str(exc)}, status_code=422)
 
 
-@app.exception_handler(ValueError)
-async def value_error(_: Request, exc: ValueError) -> ORJSONResponse:
+@app.exception_handler(OriginError)
+async def origin_error(_: Request, exc: OriginError) -> ORJSONResponse:
     return ORJSONResponse({"detail": str(exc)}, status_code=422)
 
 
@@ -259,3 +262,102 @@ def scenario_snap(body: SnapIn) -> dict[str, Any]:
 @app.post("/api/scenario/evaluate")
 def scenario_evaluate(body: EvaluateIn) -> dict[str, Any]:
     return svc().evaluate(edits_of(body.scenario), body.window.to_window(), body.threshold)
+
+
+# ------------------------------------------------------------------------ optimizer
+
+
+class BudgetIn(BaseModel):
+    kind: Literal["fleet", "bus_hours"] = "fleet"
+    value: float | None = Field(default=None, ge=0)
+
+
+class OptimizeIn(BaseModel):
+    window: WindowIn = Field(default_factory=WindowIn)
+    budget: BudgetIn = Field(default_factory=BudgetIn)
+    moves: list[Literal["frequency", "stops", "new_lines"]] = Field(
+        default=["frequency"], min_length=1
+    )
+    objective: Literal["accessibility", "travel_time"] = "accessibility"
+    base_scenario: EditList = None
+    seed: int = 0
+    time_limit_s: float = Field(default=60, ge=10, le=300)
+    threshold: int = Field(default=1800, ge=300, le=5400)
+
+
+class TradeoffIn(BaseModel):
+    window: WindowIn = Field(default_factory=WindowIn)
+    budget_kind: Literal["fleet", "bus_hours"] = "fleet"
+    values: list[Annotated[float, Field(ge=0)]] = Field(min_length=1, max_length=12)
+    seed: int = 0
+
+
+class ReportIn(BaseModel):
+    scenario: EditList = None
+    window: WindowIn = Field(default_factory=WindowIn)
+    threshold: int = Field(default=1800, ge=300, le=5400)
+    lang: Literal["es", "en"] = "es"
+    title: str = Field(default="", max_length=120)
+
+
+JOBS = JobManager()
+
+
+@app.post("/api/optimize")
+def optimize(body: OptimizeIn) -> dict[str, Any]:
+    service = svc()
+    edits = edits_of(body.base_scenario)
+    window = body.window.to_window()
+    job = JOBS.submit(
+        "optimize",
+        lambda progress: run_optimize(
+            service,
+            progress,
+            window=window,
+            budget=Budget(body.budget.kind, body.budget.value),
+            moves=tuple(dict.fromkeys(body.moves)),
+            objective=body.objective,
+            base_edits=edits,
+            seed=body.seed,
+            time_limit_s=body.time_limit_s,
+            threshold=body.threshold,
+        ),
+    )
+    return {"job_id": job.id}
+
+
+@app.post("/api/optimize/tradeoff")
+def optimize_tradeoff(body: TradeoffIn) -> dict[str, Any]:
+    service = svc()
+    window = body.window.to_window()
+    job = JOBS.submit(
+        "tradeoff",
+        lambda progress: run_tradeoff(
+            service,
+            progress,
+            window=window,
+            budget_kind=body.budget_kind,
+            values=sorted(set(body.values)),
+            seed=body.seed,
+        ),
+    )
+    return {"job_id": job.id}
+
+
+@app.get("/api/optimize/{job_id}")
+def optimize_status(job_id: str) -> dict[str, Any]:
+    job = JOBS.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"unknown job {job_id!r}")
+    return job.view()
+
+
+# --------------------------------------------------------------------------- report
+
+
+@app.post("/api/report")
+def report_html(body: ReportIn) -> Response:
+    edits = edits_of(body.scenario)
+    title = body.title.strip() or ("Escenario de red" if body.lang == "es" else "Network scenario")
+    page = render_report(svc(), edits, body.window.to_window(), body.threshold, body.lang, title)
+    return Response(page, media_type="text/html; charset=utf-8")

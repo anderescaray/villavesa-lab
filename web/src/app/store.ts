@@ -15,6 +15,11 @@ export const VIEWS: readonly ViewId[] = [
   'optimizer',
   'compare',
 ];
+/** Map metric of the accessibility view */
+export type AccMetric = 'time' | 'gap' | 'jobs' | 'income';
+export const ACC_METRICS: readonly AccMetric[] = ['time', 'gap', 'jobs', 'income'];
+export const ACC_THRESHOLDS = [900, 1800, 2700, 3600] as const;
+
 export type ThemePref = 'light' | 'dark' | 'system';
 export type Theme = 'light' | 'dark';
 
@@ -37,6 +42,10 @@ export interface AppState {
   isoMode: IsochroneMode;
   shortcutsOpen: boolean;
   aboutOpen: boolean;
+  /** accessibility view: destination category, map metric and threshold (s) */
+  accCategory: string;
+  accMetric: AccMetric;
+  accThreshold: number;
 }
 
 export interface AppActions {
@@ -69,6 +78,9 @@ export const useApp = create<AppState & AppActions>()((set, get) => ({
   isoMode: 'transit',
   shortcutsOpen: false,
   aboutOpen: false,
+  accCategory: 'hospital',
+  accMetric: 'time',
+  accThreshold: 1800,
 
   set: (patch) => set(patch),
   setView: (view) => set({ view }),

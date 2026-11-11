@@ -33,12 +33,13 @@ const north = {
 };
 
 const fixture: Vehicles = {
+  day: 'weekday',
   shapes: [east, north],
   trips: [
     // trip B listed first on purpose: index must sort by start
-    { route: 'B', shape: 9, t: [200, 300], d: [0, 1000] },
+    { route: 'B', shape: 9, headsign: '', direction: 0, t: [200, 300], d: [0, 1000] },
     // dwell at 500 m between t=150 and t=170
-    { route: 'A', shape: 7, t: [100, 150, 170, 220], d: [0, 500, 500, 1000] },
+    { route: 'A', shape: 7, headsign: '', direction: 0, t: [100, 150, 170, 220], d: [0, 500, 500, 1000] },
   ],
 };
 
@@ -68,8 +69,9 @@ describe('buildVehicleIndex', () => {
   });
   it('repairs decreasing times defensively', () => {
     const bad = buildVehicleIndex({
+      day: 'weekday',
       shapes: [east],
-      trips: [{ route: 'X', shape: 7, t: [10, 5, 20], d: [0, 100, 50] }],
+      trips: [{ route: 'X', shape: 7, headsign: '', direction: 0, t: [10, 5, 20], d: [0, 100, 50] }],
     });
     expect(Array.from(bad.t)).toEqual([10, 10, 20]);
     expect(Array.from(bad.d)).toEqual([0, 100, 100]);
@@ -91,8 +93,9 @@ describe('distanceAt', () => {
   });
   it('handles repeated timestamps (zero-duration segment)', () => {
     const z = buildVehicleIndex({
+      day: 'weekday',
       shapes: [east],
-      trips: [{ route: 'Z', shape: 7, t: [0, 10, 10, 20], d: [0, 100, 200, 300] }],
+      trips: [{ route: 'Z', shape: 7, headsign: '', direction: 0, t: [0, 10, 10, 20], d: [0, 100, 200, 300] }],
     });
     expect(distanceAt(z, 0, 10)).toBe(200);
   });
@@ -153,10 +156,12 @@ describe('departuresByHour / headwayAround', () => {
     const trips = Array.from({ length: 12 }, (_, i) => ({
       route: 'A',
       shape: 7,
+      headsign: '',
+      direction: 0,
       t: [8 * 3600 + i * 300, 8 * 3600 + i * 300 + 600],
       d: [0, 1000],
     }));
-    const idx = buildVehicleIndex({ shapes: [east], trips });
+    const idx = buildVehicleIndex({ day: 'weekday', shapes: [east], trips });
     const per = departuresByHour(idx);
     expect(per.get('A')?.[8]).toBe(12);
     // 12 departures/h in one direction → every 5 min (smoothed with empty neighbours: 6/h)

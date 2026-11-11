@@ -5,7 +5,15 @@
 import { DAY_TYPES, type DayType, type IsochroneMode, type LonLat } from '@/api/types';
 import { clock } from '@/features/time/clock';
 import { LANGS, type Lang } from '@/i18n/dict';
-import { VIEWS, useApp, type AppState, type ViewId } from './store';
+import {
+  ACC_METRICS,
+  ACC_THRESHOLDS,
+  VIEWS,
+  useApp,
+  type AccMetric,
+  type AppState,
+  type ViewId,
+} from './store';
 
 export interface UrlState {
   route: ViewId | 'dev';
@@ -19,6 +27,10 @@ export interface UrlState {
   isoT?: number;
   mode?: IsochroneMode;
   play?: boolean;
+  cat?: string;
+  metric?: AccMetric;
+  /** threshold in seconds */
+  thr?: number;
 }
 
 const hhmm = (sec: number) => {
@@ -61,6 +73,12 @@ export function parseHash(hash: string): UrlState {
   if (mode === 'walk' || mode === 'transit') out.mode = mode;
   const play = q.get('play');
   if (play === '0' || play === '1') out.play = play === '1';
+  const cat = q.get('cat');
+  if (cat && /^[a-z_]{1,40}$/.test(cat)) out.cat = cat;
+  const metric = q.get('metric');
+  if (metric && ACC_METRICS.includes(metric as AccMetric)) out.metric = metric as AccMetric;
+  const thr = Number(q.get('thr')) * 60;
+  if ((ACC_THRESHOLDS as readonly number[]).includes(thr)) out.thr = thr;
   return out;
 }
 
@@ -79,6 +97,11 @@ export function buildHash(s: AppState, time: number, playing: boolean): string {
     q.set('isot', hhmm(s.isoStart));
     if (s.isoMode !== 'transit') q.set('mode', s.isoMode);
   }
+  if (s.view === 'accessibility') {
+    q.set('cat', s.accCategory);
+    q.set('metric', s.accMetric);
+    q.set('thr', String(s.accThreshold / 60));
+  }
   if (!playing) q.set('play', '0');
   return `#/${s.view}?${q.toString().replace(/%2C/g, ',')}`;
 }
@@ -95,6 +118,9 @@ export function applyUrl(u: UrlState): void {
   if (u.iso) patch.isoOrigin = u.iso;
   if (u.isoT !== undefined) patch.isoStart = u.isoT;
   if (u.mode) patch.isoMode = u.mode;
+  if (u.cat) patch.accCategory = u.cat;
+  if (u.metric) patch.accMetric = u.metric;
+  if (u.thr) patch.accThreshold = u.thr;
   useApp.setState(patch);
 }
 

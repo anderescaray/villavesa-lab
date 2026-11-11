@@ -24,6 +24,8 @@ export interface VehicleIndex {
   shapeOf: Int32Array;
   routeOf: Uint16Array;
   routeIds: string[];
+  /** headsign per trip (sorted order), straight from the API */
+  headsigns: string[];
   shapes: ShapeIndex[];
   maxDuration: number;
   /** [first departure, last arrival] */
@@ -56,6 +58,7 @@ export function buildVehicleIndex(v: Vehicles): VehicleIndex {
   const d = new Float64Array(total);
   const shapeOf = new Int32Array(n);
   const routeOf = new Uint16Array(n);
+  const headsigns: string[] = new Array<string>(n);
   const shapeById = new Map(v.shapes.map((s, i) => [s.id, i]));
   let cursor = 0;
   let maxDuration = 0;
@@ -82,6 +85,7 @@ export function buildVehicleIndex(v: Vehicles): VehicleIndex {
     lo = Math.min(lo, start[i]!);
     hi = Math.max(hi, end[i]!);
     shapeOf[i] = shapeById.get(tr.shape) ?? -1;
+    headsigns[i] = tr.headsign;
     let r = routeIdx.get(tr.route);
     if (r === undefined) {
       r = routeIds.length;
@@ -111,6 +115,7 @@ export function buildVehicleIndex(v: Vehicles): VehicleIndex {
     shapeOf,
     routeOf,
     routeIds,
+    headsigns,
     shapes,
     maxDuration,
     domain: n ? [lo, hi] : [0, 0],

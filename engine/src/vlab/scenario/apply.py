@@ -247,20 +247,24 @@ def _rebuild(tt: Timetable, blocks: list[PatternBlock], changed: set[int]) -> Ti
 # ======================================================================= frequency
 
 
-def _resample_starts(t: npt.NDArray[np.int64], n_new: int) -> npt.NDArray[np.int64]:
+def _resample_starts(
+    t: npt.NDArray[np.int64], n_new: int, lo: float = -math.inf, hi: float = math.inf
+) -> npt.NDArray[np.int64]:
     """``n_new`` start times spread like the ``len(t)`` sorted old ones (same span and
-    time-of-day density)."""
+    time-of-day density), kept inside the period ``[lo, hi)``."""
     n = len(t)
     if n_new <= 0 or n == 0:
         return np.zeros(0, dtype=np.int64)
     if n == 1:
         half = 900.0
-        knots_y = np.array([t[0] - half, t[0], t[0] + half])
+        knots_y = np.array([max(t[0] - half, lo), t[0], min(t[0] + half, hi - 1)])
         knots_x = np.array([0.0, 0.5, 1.0])
     else:
         h0, h1 = float(t[1] - t[0]), float(t[-1] - t[-2])
         knots_x = np.concatenate([[0.0], (np.arange(n) + 0.5) / n, [1.0]])
-        knots_y = np.concatenate([[t[0] - h0 / 2], t.astype(np.float64), [t[-1] + h1 / 2]])
+        knots_y = np.concatenate(
+            [[max(t[0] - h0 / 2, lo)], t.astype(np.float64), [min(t[-1] + h1 / 2, hi - 1)]]
+        )
     q = (np.arange(n_new) + 0.5) / n_new
     out: npt.NDArray[np.int64] = np.round(np.interp(q, knots_x, knots_y)).astype(np.int64)
     return out
@@ -271,6 +275,9 @@ def _retime_group(
     group: list[int],
     sels: list[npt.NDArray[np.bool_]],
     n_new: int,
+    lo: float = -math.inf,
+    hi: float = math.inf,
+    prev_day: bool = False,
 ) -> None:
     """Replace the selected own-day trips of the patterns of one direction by
     ``n_new`` trips, in place.
@@ -288,7 +295,7 @@ def _retime_group(
     old_row = np.concatenate([np.flatnonzero(sel) for sel in sels])
     order = np.argsort(old_t, kind="stable")
     old_t, old_g, old_row = old_t[order], old_g[order], old_row[order]
-    new_t = _resample_starts(old_t, n_new)
+    new_t = _resample_starts(old_t, n_new, lo, hi)
     near = np.clip(np.searchsorted(old_t, new_t), 0, len(old_t) - 1)
     left = np.clip(near - 1, 0, len(old_t) - 1)
     near = np.where(np.abs(old_t[left] - new_t) <= np.abs(old_t[near] - new_t), left, near)
@@ -313,7 +320,7 @@ def _retime_group(
             np.vstack([dep[keep], new_dep]).astype(np.int32),
             b.offsets,
             np.concatenate([b.trip_source[keep], np.full(len(t), -1, np.int32)]),
-            np.concatenate([b.trip_prev_day[keep], np.zeros(len(t), np.bool_)]),
+            np.concatenate([b.trip_prev_day[keep], np.full(len(t), prev_day, np.bool_)]),
         )
 
 
@@ -334,7 +341,8 @@ def _frequency(tt: Timetable, e: SetHeadway | ScaleFrequency, log: ChangeLog) ->
     ``current mean headway / target`` (:func:`vlab.gtfs.stats.mean_headways`:
     busiest direction; peak 07-09 h; off-peak measured 10-13 h and applied
     outside the peak).
-    Overnight copies of the previous day's trips are left untouched.
+    For an all-day change the overnight copies of the previous day's trips are
+    scaled too; peak/off-peak changes leave them untouched.
     """
     r = _route_idx(tt, e.route_id)
     blocks = blocks_of(tt)
@@ -353,30 +361,38 @@ def _frequency(tt: Timetable, e: SetHeadway | ScaleFrequency, log: ChangeLog) ->
             )
         factor = current / float(e.headway)
     changed: set[int] = set()
-    for lo, hi in chunks:
-        for d in sorted({blocks[i].info.direction for i in mine}):
-            group = [i for i in mine if blocks[i].info.direction == d]
-            sels = []
-            for i in group:
-                t0 = blocks[i].dep[:, 0]
-                sels.append((t0 >= lo) & (t0 < hi) & ~blocks[i].trip_prev_day)
-            total = sum(int(sel.sum()) for sel in sels)
-            if total == 0:
-                continue
-            target = max(1, round(total * factor)) if factor > 0 else 0
-            if target == total:
-                continue
-            # largest-remainder split of the target between the direction's patterns,
-            # so branches and short-turn variants keep their share of the service
-            counts = np.array([int(sel.sum()) for sel in sels])
-            raw = counts * (target / total)
-            alloc = np.floor(raw).astype(int)
-            for j in np.argsort(-(raw - alloc), kind="stable")[: target - int(alloc.sum())]:
-                alloc[j] += 1
-            for i, sel, n_new in zip(group, sels, alloc, strict=True):
-                if sel.any() and int(n_new) != int(sel.sum()):
-                    _retime_group(blocks, [i], [sel], int(n_new))
-                    changed.add(i)
+    # overnight copies of the previous day's trips follow an all-day change, so a
+    # night line is scaled on both sides of midnight
+    passes = [False, True] if e.period == "all" else [False]
+    for prev in passes:
+        for lo, hi in chunks:
+            for d in sorted({blocks[i].info.direction for i in mine}):
+                group = [i for i in mine if blocks[i].info.direction == d]
+                sels = []
+                for i in group:
+                    t0 = blocks[i].dep[:, 0]
+                    sels.append((t0 >= lo) & (t0 < hi) & (blocks[i].trip_prev_day == prev))
+                counts = np.array([int(sel.sum()) for sel in sels])
+                total = int(counts.sum())
+                if total == 0:
+                    continue
+                if e.period == "all" and total > 1:
+                    # headway = span / (n - 1): scale the number of gaps, not of trips
+                    target = round((total - 1) * factor) + 1
+                else:
+                    target = round(total * factor)
+                # largest-remainder split between the direction's patterns; every
+                # pattern keeps at least one trip so no branch silently disappears
+                raw = counts * (max(target, 1) / total)
+                alloc = np.floor(raw).astype(int)
+                rest = max(target, 1) - int(alloc.sum())
+                for j in np.argsort(-(raw - alloc), kind="stable")[: max(rest, 0)]:
+                    alloc[j] += 1
+                alloc = np.where(counts > 0, np.maximum(alloc, 1), 0)
+                for i, sel, n_new in zip(group, sels, alloc, strict=True):
+                    if sel.any() and int(n_new) != int(sel.sum()):
+                        _retime_group(blocks, [i], [sel], int(n_new), lo, hi, prev)
+                        changed.add(i)
     if not changed:
         log.warnings.append(f"route {e.route_id}: frequency change had no effect")
         return tt
@@ -683,6 +699,8 @@ def _add_route(
         tt, shape_idx = _with_shape(tt, f"{e.route_id}:{d}", path.coords)
         px, py = to_xy(path.coords[:, 0], path.coords[:, 1])
         off, dist = project_monotone(px, py, tt.stop_x[stops], tt.stop_y[stops])
+        if path.length_m < 200.0:
+            raise ScenarioError("a new route must be at least 200 m long")
         if float(dist.max(initial=0.0)) > 150.0:
             log.warnings.append(
                 f"route {e.route_id} direction {d}: a stop is {dist.max():.0f} m from the path"

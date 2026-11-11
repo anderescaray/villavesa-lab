@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any, ClassVar, Literal
@@ -185,27 +186,86 @@ def _check_lonlat(lon: float, lat: float) -> None:
         raise ScenarioError(f"coordinates ({lon}, {lat}) are outside the study region")
 
 
+_NUMERIC = {
+    "headway": int,
+    "factor": float,
+    "lon": float,
+    "lat": float,
+    "direction": int,
+    "speed_kmh": float,
+    "first_dep": int,
+    "last_dep": int,
+}
+_STRINGS = ("route_id", "stop_id", "after_stop_id", "name", "short_name", "color", "period")
+
+
+def _number(name: str, value: Any, kind: type) -> Any:
+    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
+        raise ScenarioError(f"{name} must be a number, got {value!r}")
+    if kind is int:
+        if float(value) != int(value):
+            raise ScenarioError(f"{name} must be a whole number, got {value!r}")
+        return int(value)
+    return float(value)
+
+
+def _clean(data: dict[str, Any]) -> dict[str, Any]:
+    for k, kind in _NUMERIC.items():
+        if k in data:
+            data[k] = _number(k, data[k], kind)
+    for k in _STRINGS:
+        if k in data and not isinstance(data[k], str):
+            raise ScenarioError(f"{k} must be a string, got {data[k]!r}")
+    return data
+
+
 def parse_edit(raw: Mapping[str, Any]) -> Edit:
-    """Build a validated edit from its wire dict."""
+    """Build a validated edit from its wire dict. Any malformed input raises
+    :class:`ScenarioError` (never a bare ``TypeError``/``KeyError``)."""
+    if not isinstance(raw, Mapping):
+        raise ScenarioError(f"an edit must be an object, got {type(raw).__name__}")
     kind = raw.get("type")
     cls = _TYPES.get(str(kind))
     if cls is None:
         raise ScenarioError(f"unknown edit type {kind!r}")
     names = {f.name for f in fields(cls)}
-    data = {k: v for k, v in raw.items() if k in names and v is not None}
+    data = _clean({k: v for k, v in raw.items() if k in names and v is not None})
     try:
         if cls is SpeedUp:
-            data["stop_ids"] = tuple(str(s) for s in data.get("stop_ids", ()))
+            ids = data.get("stop_ids", ())
+            if not isinstance(ids, list | tuple) or not all(isinstance(s, str) for s in ids):
+                raise ScenarioError("stop_ids must be a list of stop ids")
+            data["stop_ids"] = tuple(ids)
         if cls is AddRoute:
+            stops = data.get("stops", ())
+            if not isinstance(stops, list | tuple) or not all(
+                isinstance(s, Mapping) for s in stops
+            ):
+                raise ScenarioError("stops must be a list of objects")
             data["stops"] = tuple(
-                RouteStop(**{k: v for k, v in s.items() if k in ("stop_id", "lon", "lat", "name")})
-                for s in data.get("stops", ())
+                RouteStop(
+                    **_clean(
+                        {
+                            k: v
+                            for k, v in s.items()
+                            if k in ("stop_id", "lon", "lat", "name") and v is not None
+                        }
+                    )
+                )
+                for s in stops
             )
-            data["waypoints"] = tuple((float(w[0]), float(w[1])) for w in data.get("waypoints", ()))
+            data["waypoints"] = tuple(
+                (_number("waypoint", w[0], float), _number("waypoint", w[1], float))
+                for w in data.get("waypoints", ())
+            )
+            if not isinstance(data.get("bidirectional", True), bool):
+                raise ScenarioError("bidirectional must be true or false")
         edit: Edit = cls(**data)
-    except TypeError as exc:
+        edit.validate()
+    except ScenarioError:
+        raise
+    except (TypeError, AttributeError, IndexError, KeyError, ValueError) as exc:
         raise ScenarioError(f"invalid {kind} edit: {exc}") from exc
-    edit.validate()
     return edit
 
 

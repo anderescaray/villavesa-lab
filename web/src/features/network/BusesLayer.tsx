@@ -96,6 +96,12 @@ function render(st: BusRenderState) {
     return;
   }
   const { kinds, view } = useApp.getState();
+  if (view === 'accessibility') {
+    // the analysis view is about the timetable as a whole: no moving buses competing with data
+    deckRegistry.remove(BUS_LAYER_ID);
+    deckRegistry.remove(HALO_LAYER_ID);
+    return;
+  }
   const time = clock.getState().time;
   const n = computeFrame(vehicles.index, time, st.frame);
   // filter by line kind (night/special toggles) in place

@@ -64,7 +64,17 @@ export function buildVehicleModel(v: Vehicles): VehicleModel {
   const cached = vehicleCache.get(v);
   if (cached) return cached;
   const index = buildVehicleIndex(v);
-  const from = Math.floor(index.domain[0] / 3600) * 3600;
+  // `/api/vehicles` also returns the previous evening's night trips that run past midnight
+  // (times -3600 … 3600). They animate correctly, but the timeline starts with this day's own
+  // service (from 04:00), and the night service is shown at its end (24:00–26:00).
+  let first = index.domain[0];
+  for (let i = 0; i < index.start.length; i++) {
+    if (index.start[i]! >= 4 * 3600) {
+      first = index.start[i]!;
+      break;
+    }
+  }
+  const from = Math.max(0, Math.floor(first / 3600) * 3600);
   const to = Math.ceil(index.domain[1] / 3600) * 3600;
   const model = {
     index,
@@ -114,42 +124,4 @@ export function matchRoute(r: Route, query: string, stopById: Map<string, Stop>)
     }
   }
   return false;
-}
-
-const headsignCache = new WeakMap<VehicleModel, Map<number, string | null>>();
-
-/**
- * Headsign of a vehicle trip. `/api/vehicles` carries no headsign/direction (see proposed
- * contract changes), so we match the trip's shape end point to the closest pattern end.
- */
-export function headsignForTrip(
-  network: NetworkModel,
-  vehicles: VehicleModel,
-  trip: number,
-): string | null {
-  let cache = headsignCache.get(vehicles);
-  if (!cache) headsignCache.set(vehicles, (cache = new Map()));
-  const shapeIdx = vehicles.index.shapeOf[trip] ?? -1;
-  const key = shapeIdx * 10000 + (vehicles.index.routeOf[trip] ?? 0);
-  if (cache.has(key)) return cache.get(key) ?? null;
-  const routeId = vehicles.index.routeIds[vehicles.index.routeOf[trip] ?? 0];
-  const route = routeId ? network.routeById.get(routeId) : undefined;
-  const shape = vehicles.index.shapes[shapeIdx];
-  let best: string | null = null;
-  if (route && shape && shape.coords.length >= 2) {
-    const ex = shape.coords[shape.coords.length - 2]!;
-    const ey = shape.coords[shape.coords.length - 1]!;
-    let bestD = Infinity;
-    for (const p of route.patterns) {
-      const last = p.path[p.path.length - 1];
-      if (!last) continue;
-      const d = (last[0] - ex) ** 2 + (last[1] - ey) ** 2;
-      if (d < bestD) {
-        bestD = d;
-        best = p.headsign;
-      }
-    }
-  }
-  cache.set(key, best);
-  return best;
 }

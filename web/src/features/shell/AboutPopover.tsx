@@ -3,7 +3,7 @@ import { useMeta } from '@/api/queries';
 import { DAY_TYPES } from '@/api/types';
 import { useApp } from '@/app/store';
 import { Popover, Skeleton } from '@/components/ui';
-import { useT } from '@/i18n';
+import { noteText, useT } from '@/i18n';
 import { formatNumber, localeOf } from '@/lib/format';
 import s from './AboutPopover.module.css';
 
@@ -49,7 +49,7 @@ export function AboutPopover({ trigger }: { trigger: ReactNode }) {
               <h3 className={s.sectionTitle}>{t('about.limitations')}</h3>
               <ul className={s.notes}>
                 {meta.data_notes.map((n) => (
-                  <li key={n}>{n}</li>
+                  <li key={n.key}>{noteText(t, n)}</li>
                 ))}
               </ul>
             </div>

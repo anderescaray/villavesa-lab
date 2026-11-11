@@ -7,7 +7,7 @@ import { snapIsoStart } from '@/features/isochrone/useIsochroneRequest';
 import { useT } from '@/i18n';
 import { useMapContext } from '@/map/MapContext';
 import { useBusHover } from './BusesLayer';
-import { headsignForTrip, useNetworkModel, useVehicleModel } from './model';
+import { useNetworkModel, useVehicleModel } from './model';
 import s from './MapPopovers.module.css';
 
 /** Popover anchored to the selected stop; follows the map while panning. */
@@ -97,7 +97,7 @@ export function BusTooltip() {
   if (!hover || !model || !vehicles) return null;
   const route = model.routeById.get(hover.route);
   if (!route) return null;
-  const headsign = headsignForTrip(model, vehicles, hover.trip);
+  const headsign = vehicles.index.headsigns[hover.trip];
   return (
     <div
       className={s.tooltip}

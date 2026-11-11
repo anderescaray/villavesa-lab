@@ -5,7 +5,7 @@ import { Button, EmptyState } from '@/components/ui';
 import { VIEW_META } from '@/features/shell/Rail';
 import { useT } from '@/i18n';
 
-type PlannedId = Exclude<ViewId, 'network'>;
+type PlannedId = Exclude<ViewId, 'network' | 'accessibility'>;
 
 /**
  * Designed empty state for views delivered in later milestones: says exactly what the view will

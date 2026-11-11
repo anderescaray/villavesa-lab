@@ -193,6 +193,8 @@ export function NetworkLayers() {
   const hovered = useApp((s) => s.hoveredRouteId);
   const direction = useApp((s) => s.selectedDirection);
   const selectedStop = useApp((s) => s.selectedStopId);
+  // analysis views keep the network as quiet context: thin, low-contrast, no stops
+  const quiet = useApp((s) => s.view === 'accessibility');
   const minute = useClockMinute();
 
   // 1) sources + layers (re-added after every style load)
@@ -213,7 +215,7 @@ export function NetworkLayers() {
       .join(',');
   }, [model, kinds, minute]);
 
-  const highlight = hovered ?? selected;
+  const highlight = quiet ? null : (hovered ?? selected);
 
   useEffect(() => {
     if (!map || !model || !styleVersion) return;
@@ -222,23 +224,24 @@ export function NetworkLayers() {
     const dim = theme === 'dark' ? 0.22 : 0.16;
     const lineOpacity: ExpressionSpecification = highlight
       ? ['case', isVisible, dim, ['==', ['get', 'route_id'], highlight], dim, 0]
-      : ['case', isVisible, 0.92, 0];
+      : ['case', isVisible, quiet ? (theme === 'dark' ? 0.5 : 0.55) : 0.92, 0];
     setPaint(map, ROUTE_LAYERS.line, 'line-opacity', lineOpacity);
+    setPaint(map, ROUTE_LAYERS.line, 'line-width', width(quiet ? 0.55 : 1));
     setPaint(
       map,
       ROUTE_LAYERS.casing,
       'line-opacity',
-      highlight ? 0 : ['case', isVisible, 0.85, 0],
+      highlight || quiet ? 0 : ['case', isVisible, 0.85, 0],
     );
     const hlFilter: FilterSpecification = ['==', ['get', 'route_id'], highlight ?? '__none__'];
     setFilter(map, ROUTE_LAYERS.hlCasing, hlFilter);
     setFilter(map, ROUTE_LAYERS.hl, hlFilter);
-  }, [map, model, styleVersion, visibleKey, highlight, theme]);
+  }, [map, model, styleVersion, visibleKey, highlight, theme, quiet]);
 
   // 3) stops of the selected line (and direction) + selected stop ring
   useEffect(() => {
     if (!map || !model || !styleVersion) return;
-    const route = selected ? model.routeById.get(selected) : undefined;
+    const route = selected && !quiet ? model.routeById.get(selected) : undefined;
     const pattern = route?.patterns.find((p) => p.direction === direction) ?? route?.patterns[0];
     const ids = pattern?.stop_ids ?? [];
     setFilter(map, ROUTE_LAYERS.stopsRoute, ['in', ['get', 'stop_id'], ['literal', ids]]);
@@ -252,20 +255,20 @@ export function NetworkLayers() {
       map,
       ROUTE_LAYERS.stops,
       'circle-opacity',
-      route ? 0 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1],
+      route || quiet ? 0 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1],
     );
     setPaint(
       map,
       ROUTE_LAYERS.stops,
       'circle-stroke-opacity',
-      route ? 0.35 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1],
+      quiet ? 0 : route ? 0.35 : ['interpolate', ['linear'], ['zoom'], 13, 0, 13.6, 1],
     );
     setFilter(map, ROUTE_LAYERS.stopSelected, [
       '==',
       ['get', 'stop_id'],
-      selectedStop ?? '__none__',
+      (!quiet && selectedStop) || '__none__',
     ]);
-  }, [map, model, styleVersion, selected, direction, selectedStop, theme]);
+  }, [map, model, styleVersion, selected, direction, selectedStop, theme, quiet]);
 
   return null;
 }

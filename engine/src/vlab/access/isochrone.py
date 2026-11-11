@@ -42,6 +42,10 @@ CAP_S = 7200
 BIG = np.float32(1e9)
 
 
+class OriginError(ValueError):
+    """The requested origin cannot be attached to the street network."""
+
+
 @nb.njit(cache=True)
 def _node_times(indptr, indices, length_m, seed_nodes, seed_t, cutoff, speed):  # type: ignore[no-untyped-def]  # pragma: no cover
     """Multi-source Dijkstra (seconds) on the walk graph, bounded by ``cutoff``."""
@@ -89,7 +93,7 @@ def time_field(
     tt = state.timetable
     snap = walk.snap([origin[0]], [origin[1]], max_m=400.0)
     if not snap.ok[0]:
-        raise ValueError("the origin is too far from the street network")
+        raise OriginError("the origin is too far from the street network")
     o_nodes = snap.nodes.astype(np.int64)
     o_secs = snap.offset_m / WALK_SPEED_MPS
     edge_len = walk.length_m
@@ -135,14 +139,26 @@ def time_field(
 
 
 def _stop_snap(model: Model, state: NetworkState) -> tuple[Any, Any, Any]:
-    """Snap of the state's stops to walk nodes (cached on the timetable object)."""
+    """Snap of the state's stops to walk nodes, cached per stop-coordinate array.
+
+    Derived timetables inherit ``extra`` from their base, so the cache entry is
+    tied to the identity of the coordinate arrays: timetables that share the
+    stops share the snap, and any stop edit (which allocates new arrays)
+    invalidates it.
+    """
     tt = state.timetable
     cached = tt.extra.get("_iso_stop_snap")
-    if cached is None:
-        s = model.walk.snap(tt.stop_lon, tt.stop_lat)
-        cached = (s.ptr, s.nodes.astype(np.int64), s.offset_m)
-        tt.extra["_iso_stop_snap"] = cached
-    return cached  # type: ignore[return-value]
+    if (
+        isinstance(cached, tuple)
+        and len(cached) == 3
+        and cached[0] is tt.stop_lon
+        and cached[1] is tt.stop_lat
+    ):
+        return cached[2]  # type: ignore[no-any-return]
+    snap = model.walk.snap(tt.stop_lon, tt.stop_lat)
+    value = (snap.ptr, snap.nodes.astype(np.int64), snap.offset_m)
+    tt.extra["_iso_stop_snap"] = (tt.stop_lon, tt.stop_lat, value)
+    return value
 
 
 def point_times(model: Model, field: TimeField, which: str) -> npt.NDArray[np.float32]:
