@@ -44,9 +44,9 @@ then Docker verification, final screenshots/GIF, README with findings.
 Numbers for the README (weekday 08-09 h, 30 min): 365,400 residents; hospital
 71.2%, health centre 99.1%, university 49.9%, city centre 75.6% within 30 min;
 141,766 residents miss an essential destination; mean door-to-door time 27.5
-min. Optimizer at the same 162 buses: accessibility +3.2% (frequency only, 32 s)
-or +3.7% (with 10 stops consolidated and one new line), about 6,100-9,200 fewer
-under-served residents. OTP validation: median error -0.4 min, MAE 2.1 min,
+min. Optimizer at the same 162 buses (final, monotone frequency model):
+accessibility +1.8% (frequency only, 35 s, 3,000 fewer under-served residents)
+or +2.3% (with stops consolidated and new lines). OTP validation: median error -0.4 min, MAE 2.1 min,
 90% within 5 min (800 pairs).
 
 ## Working agreements

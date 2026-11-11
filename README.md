@@ -10,7 +10,7 @@ validated against OpenTripPlanner.
 
 ![Today's network with live buses](docs/screenshots/01-network-light.png)
 
-<!-- DEMO_GIF -->
+![A tour: live buses, an isochrone, the accessibility dashboard and the scenario editor](docs/img/demo.gif)
 
 ```bash
 docker compose up        # then open http://localhost:3000
@@ -30,7 +30,15 @@ The interface is in Spanish by default, with English and Basque one click away.
 | **Optimizer** | "Given N buses, maximise accessibility": frequency reallocation (exact MILP), stop consolidation and new-line proposals (ALNS), with the budget-vs-benefit curve and an explanation line by line. |
 | **Compare and report** | Before/after comparison and a self-contained, print-ready HTML report for a planner or a journalist. |
 
-<!-- SCREENSHOT_GRID -->
+| Accessibility dashboard | Scenario editor |
+| --- | --- |
+| ![Accessibility dashboard](docs/screenshots/08-accessibility-light.png) | ![Scenario editor with live impact](docs/screenshots/editor-02-frequency.png) |
+| **Optimizer proposal** | **Before / after** |
+| ![Optimizer result](docs/screenshots/optimizer-result.png) | ![Before and after comparison](docs/screenshots/compare-swipe.png) |
+
+More in [`docs/screenshots/`](docs/screenshots): [isochrones](docs/screenshots/04-isochrone.png),
+[dark mode](docs/screenshots/02-network-dark.png), [under-served areas](docs/screenshots/08-accessibility-underserved.png),
+[drawing a new line](docs/screenshots/editor-04-draw.png), [the budget curve](docs/screenshots/optimizer-tradeoff.png).
 
 ## Findings
 
@@ -56,14 +64,16 @@ at the end.
   essential destination, 19% more than on a weekday morning.
 - **The same buses can do more.** Reallocating frequencies between lines with
   the same peak fleet (162 buses) raises population-weighted accessibility by
-  **3.2%**, cuts the mean door-to-door trip by 22 seconds and brings an
-  essential destination within reach of **6,100 more residents** — with zero
-  extra buses, found in about 30 seconds. Allowing the optimizer to consolidate
-  ten closely spaced stops and add one new line (Iturrama – Landaben) reaches
-  **+3.7%** and 9,200 residents, still within the same fleet.
-- **What a bus buys.** On the budget curve, the optimized network at 146 buses
-  (−10%) still matches today's accessibility to within 0.7%; +16 buses yields
-  +4.7%, and the next 16 only +0.9% more: returns diminish quickly.
+  **1.8%**, cuts the mean door-to-door trip by 12 seconds and brings an
+  essential destination within reach of **3,000 more residents** — with zero
+  extra buses, found in about 35 seconds (6 lines get more service, paid for by
+  9 that get less). Letting the optimizer also consolidate ten closely spaced
+  stops and add short new lines reaches **+2.3%**, still within the same fleet.
+  These are conservative figures: added trips are inserted between today's
+  departures rather than re-spaced evenly.
+- **What a bus buys.** On the budget curve, an optimized network with 146 buses
+  (−10%) stays within 1% of today's accessibility; +16 buses yields +3.1% and
+  the next 16 only +1.1% more: returns diminish quickly.
 - **Only 5,400 residents (1.5%) live more than a 1 km walk from any stop.**
   Coverage is not the problem; frequency and directness are.
 
