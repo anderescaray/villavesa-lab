@@ -149,3 +149,15 @@
     max-height: calc(100% - 64px - 240px);
   }
 }
+
+/* tablet and below: dock as a bottom sheet above the time control so the map stays the hero */
+@media (max-width: 900px) {
+  .card {
+    top: auto;
+    bottom: 160px;
+    left: calc(var(--map-left, 0px) + var(--space-4));
+    right: var(--space-4);
+    width: auto;
+    max-height: 42vh;
+  }
+}

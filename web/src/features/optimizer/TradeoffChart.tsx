@@ -9,7 +9,7 @@ import s from './Optimizer.module.css';
 
 const W = 328;
 const H = 196;
-const M = { l: 38, r: 12, t: 16, b: 30 };
+const M = { l: 46, r: 12, t: 16, b: 30 };
 
 export interface TradeoffChartProps {
   result: TradeoffResult;
@@ -23,6 +23,15 @@ export interface TradeoffChartProps {
  * so today's network is the red point at (today's budget, 0). The dashed bracket at today's
  * budget is the "same buses, better network" gap.
  */
+const TIP_W = 188;
+/** Side of the point the tooltip sits on. The curve rises to the right, so a tooltip to the right
+ * goes below the point and one to the left goes above it; near both edges it centres above. */
+function tipSide(px: number, py: number): 'right' | 'left' | 'above' | 'below' {
+  if (px + 12 + TIP_W <= W) return 'right';
+  if (px - 12 - TIP_W >= 0) return 'left';
+  return py < H * 0.5 ? 'below' : 'above';
+}
+
 export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps) {
   const t = useT();
   const lang = useApp((st) => st.lang);
@@ -75,7 +84,7 @@ export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps
               y2={y(v)}
             />
             <text className={s.tick} x={M.l - 6} y={y(v) + 3.5} textAnchor="end">
-              {formatSigned(v, lang, Number.isInteger(v) ? 0 : 1).replace(/^\+/, '')}\u00a0%
+              {`${formatSigned(v, lang, Number.isInteger(v) ? 0 : 1)}\u00a0%`}
             </text>
           </g>
         ))}
@@ -152,10 +161,10 @@ export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps
       {hovered ? (
         <div
           className={s.tip}
-          data-below={y(hovered.objective_pct) < H * 0.55}
+          data-side={tipSide(x(hovered.budget), y(hovered.objective_pct))}
           role="status"
           style={{
-            left: `${(Math.min(Math.max(x(hovered.budget), 96), W - 96) / W) * 100}%`,
+            left: `${(x(hovered.budget) / W) * 100}%`,
             top: `${(y(hovered.objective_pct) / H) * 100}%`,
           }}
         >
