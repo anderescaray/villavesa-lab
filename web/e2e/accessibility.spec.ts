@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { Map as MlMap } from 'maplibre-gl';
 
 // Accessibility dashboard against the real engine (weekday 08:00–09:00 baseline).
 
@@ -14,8 +15,9 @@ async function open(page: Page, query = 'day=weekday&t=0800&play=0') {
 
 const pct = async (page: Page, id: string) =>
   Number(
-    ((await page.getByTestId(`acc-cat-${id}`).getAttribute('aria-label')) ?? '')
-      .match(/:\s*(\d+)/)?.[1] ?? NaN,
+    ((await page.getByTestId(`acc-cat-${id}`).getAttribute('aria-label')) ?? '').match(
+      /:\s*(\d+)/,
+    )?.[1] ?? NaN,
   );
 
 test('shows the headline, categories, curve and equity for the default window', async ({
@@ -71,7 +73,7 @@ test('hovering a populated cell shows its residents and travel time', async ({ p
   // find a populated cell on screen (opaque fill) and hover its centre
   const point = await page
     .waitForFunction(() => {
-      const map = window.__vlabMap;
+      const map = (globalThis as unknown as { __vlabMap?: MlMap }).__vlabMap;
       if (!map) return null;
       for (const layer of ['vl-acc-fill-a', 'vl-acc-fill-b']) {
         if (!map.getLayer(layer) || map.getPaintProperty(layer, 'fill-opacity') !== 1) continue;

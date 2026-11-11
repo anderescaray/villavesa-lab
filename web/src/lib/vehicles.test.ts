@@ -39,7 +39,14 @@ const fixture: Vehicles = {
     // trip B listed first on purpose: index must sort by start
     { route: 'B', shape: 9, headsign: '', direction: 0, t: [200, 300], d: [0, 1000] },
     // dwell at 500 m between t=150 and t=170
-    { route: 'A', shape: 7, headsign: '', direction: 0, t: [100, 150, 170, 220], d: [0, 500, 500, 1000] },
+    {
+      route: 'A',
+      shape: 7,
+      headsign: '',
+      direction: 0,
+      t: [100, 150, 170, 220],
+      d: [0, 500, 500, 1000],
+    },
   ],
 };
 
@@ -71,7 +78,9 @@ describe('buildVehicleIndex', () => {
     const bad = buildVehicleIndex({
       day: 'weekday',
       shapes: [east],
-      trips: [{ route: 'X', shape: 7, headsign: '', direction: 0, t: [10, 5, 20], d: [0, 100, 50] }],
+      trips: [
+        { route: 'X', shape: 7, headsign: '', direction: 0, t: [10, 5, 20], d: [0, 100, 50] },
+      ],
     });
     expect(Array.from(bad.t)).toEqual([10, 10, 20]);
     expect(Array.from(bad.d)).toEqual([0, 100, 100]);
@@ -95,7 +104,16 @@ describe('distanceAt', () => {
     const z = buildVehicleIndex({
       day: 'weekday',
       shapes: [east],
-      trips: [{ route: 'Z', shape: 7, headsign: '', direction: 0, t: [0, 10, 10, 20], d: [0, 100, 200, 300] }],
+      trips: [
+        {
+          route: 'Z',
+          shape: 7,
+          headsign: '',
+          direction: 0,
+          t: [0, 10, 10, 20],
+          d: [0, 100, 200, 300],
+        },
+      ],
     });
     expect(distanceAt(z, 0, 10)).toBe(200);
   });

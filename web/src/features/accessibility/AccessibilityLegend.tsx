@@ -17,7 +17,9 @@ function edgeLabels(metric: AccMetric, lang: Lang): string[] {
     case 'time':
       return TIME_EDGES.map((e) => String(e / 60));
     case 'jobs':
-      return JOBS_EDGES.map((e) => formatNumber(e * 100, lang, e * 100 < 10 && e * 100 % 1 ? 1 : 0));
+      return JOBS_EDGES.map((e) =>
+        formatNumber(e * 100, lang, e * 100 < 10 && (e * 100) % 1 ? 1 : 0),
+      );
     case 'income':
       return INCOME_EDGES.map((e) => formatNumber(e / 1000, lang, e % 1000 ? 1 : 0));
     case 'gap':
@@ -48,10 +50,16 @@ export function AccessibilityLegend() {
       : metric === 'gap'
         ? t('acc.legend.gap', { min: threshold / 60 })
         : t(`acc.legend.${metric}`);
-  const unit = metric === 'time' ? 'min' : metric === 'jobs' ? '%' : metric === 'income' ? 'k€' : '';
+  const unit =
+    metric === 'time' ? 'min' : metric === 'jobs' ? '%' : metric === 'income' ? 'k€' : '';
 
   return (
-    <Surface className={s.legend} role="group" aria-label={t('acc.metricLabel')} data-testid="acc-legend">
+    <Surface
+      className={s.legend}
+      role="group"
+      aria-label={t('acc.metricLabel')}
+      data-testid="acc-legend"
+    >
       <div className={s.legendHead}>
         <Select<AccMetric>
           size="sm"

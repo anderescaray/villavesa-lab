@@ -20,6 +20,20 @@ describe('URL state', () => {
       play: false,
     });
   });
+  it('keeps the accessibility view state', () => {
+    const s = {
+      ...useApp.getState(),
+      view: 'accessibility' as const,
+      accCategory: 'university',
+      accMetric: 'gap' as const,
+      accThreshold: 2700,
+    };
+    const u = parseHash(buildHash(s, 8 * 3600, false));
+    expect(u).toMatchObject({ cat: 'university', metric: 'gap', thr: 2700 });
+    expect(parseHash('#/accessibility?thr=17&metric=nope&cat=Bad!')).toEqual({
+      route: 'accessibility',
+    });
+  });
   it('ignores invalid values', () => {
     const u = parseHash('#/nowhere?day=monday&lang=fr&t=9999&iso=a,b');
     expect(u).toEqual({ route: 'network' });

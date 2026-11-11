@@ -97,7 +97,8 @@ function order(map: MlMap, anchor: string | undefined) {
     for (const id of [fillId('a'), fillId('b'), HOVER_LINE])
       if (map.getLayer(id)) map.moveLayer(id, ROUTE_LAYERS.casing);
   }
-  if (map.getLayer(POI_LAYER)) map.moveLayer(POI_LAYER, anchor && map.getLayer(anchor) ? anchor : undefined);
+  if (map.getLayer(POI_LAYER))
+    map.moveLayer(POI_LAYER, anchor && map.getLayer(anchor) ? anchor : undefined);
 }
 
 function writeColors(map: MlMap, slot: Slot, colors: string[]) {
@@ -204,7 +205,9 @@ export function AccessibilityLayers() {
       }
       setPoi(null);
       const layer = fillId(slot.current);
-      const f = map.getLayer(layer) ? map.queryRenderedFeatures([x, y], { layers: [layer] })[0] : undefined;
+      const f = map.getLayer(layer)
+        ? map.queryRenderedFeatures([x, y], { layers: [layer] })[0]
+        : undefined;
       const id = typeof f?.id === 'number' ? f.id : null;
       const pop = id !== null ? (zones.features[id]?.properties.population ?? 0) : 0;
       if (id === null || pop <= 0) {
@@ -240,7 +243,9 @@ export function AccessibilityLayers() {
   if (!active) return null;
   return (
     <>
-      {cell && data ? <CellTooltip hover={cell} data={data as Accessibility} zones={zones} /> : null}
+      {cell && data ? (
+        <CellTooltip hover={cell} data={data as Accessibility} zones={zones} />
+      ) : null}
       {poi ? <PoiTooltip hover={poi} /> : null}
     </>
   );

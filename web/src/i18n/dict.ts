@@ -182,7 +182,8 @@ export const es = {
 
   'acc.title': 'Accesibilidad',
   'acc.window': '{day} · {from}–{to}',
-  'acc.windowHint': 'Salidas cada 10 min entre {from} y {to}. Cambia la hora en la barra de tiempo.',
+  'acc.windowHint':
+    'Salidas cada 10 min entre {from} y {to}. Cambia la hora en la barra de tiempo.',
   'acc.threshold': 'Umbral de tiempo',
   'acc.minutes': '{n} min',
   'acc.headline': '{n} personas ({pct}) no llegan {dest} en {min} min en bus',
@@ -196,18 +197,24 @@ export const es = {
   'acc.curve': 'Población alcanzada según el tiempo',
   'acc.curveAria': 'Proporción de población que llega {dest} en cada tiempo de viaje',
   'acc.equity': 'Equidad por renta',
-  'acc.equityLead': 'Población dentro del umbral, por quintil de renta por persona de su sección censal.',
+  'acc.equityLead':
+    'Población dentro del umbral, por quintil de renta por persona de su sección censal.',
   'acc.lowIncome': 'renta baja',
   'acc.highIncome': 'renta alta',
   'acc.average': 'media',
   'acc.incomeRange': '{min} – {max} por persona · {pop} residentes',
-  'acc.ci.higher': 'El acceso {dest} se concentra en las rentas altas (índice de concentración {ci}).',
-  'acc.ci.lower': 'El acceso {dest} se concentra en las rentas bajas (índice de concentración {ci}).',
-  'acc.ci.similar': 'El acceso {dest} es similar en todos los niveles de renta (índice de concentración {ci}).',
+  'acc.ci.higher':
+    'El acceso {dest} se concentra en las rentas altas (índice de concentración {ci}).',
+  'acc.ci.lower':
+    'El acceso {dest} se concentra en las rentas bajas (índice de concentración {ci}).',
+  'acc.ci.similar':
+    'El acceso {dest} es similar en todos los niveles de renta (índice de concentración {ci}).',
   'acc.underservedTitle': 'Población mal servida',
-  'acc.underserved': '{n} residentes ({pct}) no llegan en {min} min a al menos un destino esencial: {list}.',
+  'acc.underserved':
+    '{n} residentes ({pct}) no llegan en {min} min a al menos un destino esencial: {list}.',
   'acc.about': 'Sobre este análisis',
-  'acc.aboutMethod': 'Tiempo puerta a puerta (a pie y en bus) desde cada celda de 200 m hasta el destino más cercano, como media de las salidas cada 10 min de la ventana.',
+  'acc.aboutMethod':
+    'Tiempo puerta a puerta (a pie y en bus) desde cada celda de 200 m hasta el destino más cercano, como media de las salidas cada 10 min de la ventana.',
   'acc.error': 'No se ha podido calcular la accesibilidad.',
   'acc.retry': 'Reintentar',
   'acc.loading': 'Calculando accesibilidad',
@@ -250,12 +257,18 @@ export const es = {
   'acc.legendDest.industrial_estate': 'el polígono más cercano',
   'acc.legendDest.secondary_school': 'el instituto más cercano',
   'acc.legendDest.supermarket': 'el supermercado más cercano',
-  'note.demand_gravity': 'La demanda está modelada, no observada: no existe una matriz origen-destino pública, así que los viajes siguen un modelo gravitatorio de población y actividad.',
-  'note.population_dasymetric': 'La población de cada celda de 200 m se estima repartiendo los residentes de cada sección censal según su superficie residencial (INE 2024, catastro de Navarra).',
-  'note.activity_proxy': 'La actividad es la superficie no residencial, una aproximación a empleos y servicios, no el empleo real.',
-  'note.schedule_based': 'Los tiempos salen del horario publicado: sin retrasos, ocupación ni tarifas; a las paradas solo se llega a pie.',
-  'note.cost_tariff': 'Los costes usan la tarifa del operador de la concesión anterior a 2024 (precios de 2023); los precios unitarios del contrato actual no son públicos.',
-  'note.stop_weight': 'El peso de cada parada son los residentes a 5 minutos a pie, no subidas observadas.',
+  'note.demand_gravity':
+    'La demanda está modelada, no observada: no existe una matriz origen-destino pública, así que los viajes siguen un modelo gravitatorio de población y actividad.',
+  'note.population_dasymetric':
+    'La población de cada celda de 200 m se estima repartiendo los residentes de cada sección censal según su superficie residencial (INE 2024, catastro de Navarra).',
+  'note.activity_proxy':
+    'La actividad es la superficie no residencial, una aproximación a empleos y servicios, no el empleo real.',
+  'note.schedule_based':
+    'Los tiempos salen del horario publicado: sin retrasos, ocupación ni tarifas; a las paradas solo se llega a pie.',
+  'note.cost_tariff':
+    'Los costes usan la tarifa del operador de la concesión anterior a 2024 (precios de 2023); los precios unitarios del contrato actual no son públicos.',
+  'note.stop_weight':
+    'El peso de cada parada son los residentes a 5 minutos a pie, no subidas observadas.',
   'common.close': 'Cerrar',
   'common.min': 'min',
   'common.km': 'km',
@@ -444,12 +457,14 @@ export const en: Messages = {
 
   'acc.title': 'Accessibility',
   'acc.window': '{day} · {from}–{to}',
-  'acc.windowHint': 'Departures every 10 min between {from} and {to}. Change the time in the time bar.',
+  'acc.windowHint':
+    'Departures every 10 min between {from} and {to}. Change the time in the time bar.',
   'acc.threshold': 'Time threshold',
   'acc.minutes': '{n} min',
   'acc.headline': '{n} people ({pct}) cannot reach {dest} within {min} min by bus',
   'acc.headlineAll': 'Everyone can reach {dest} within {min} min by bus',
-  'acc.headlineSub': 'Out of {total} residents of the study area, walking and by bus, on today\'s network.',
+  'acc.headlineSub':
+    "Out of {total} residents of the study area, walking and by bus, on today's network.",
   'acc.destinations': 'Destinations',
   'acc.colWithin': 'Within {min} min',
   'acc.colMedian': 'Median',
@@ -458,7 +473,8 @@ export const en: Messages = {
   'acc.curve': 'Population reached by travel time',
   'acc.curveAria': 'Share of the population that can reach {dest} at each travel time',
   'acc.equity': 'Equity by income',
-  'acc.equityLead': 'Population within the threshold, by income-per-person quintile of their census section.',
+  'acc.equityLead':
+    'Population within the threshold, by income-per-person quintile of their census section.',
   'acc.lowIncome': 'lowest income',
   'acc.highIncome': 'highest income',
   'acc.average': 'average',
@@ -467,9 +483,11 @@ export const en: Messages = {
   'acc.ci.lower': 'Access {dest} is concentrated among lower incomes (concentration index {ci}).',
   'acc.ci.similar': 'Access {dest} is similar across incomes (concentration index {ci}).',
   'acc.underservedTitle': 'Under-served population',
-  'acc.underserved': '{n} residents ({pct}) cannot reach at least one essential destination within {min} min: {list}.',
+  'acc.underserved':
+    '{n} residents ({pct}) cannot reach at least one essential destination within {min} min: {list}.',
   'acc.about': 'About this analysis',
-  'acc.aboutMethod': 'Door-to-door time (walking and bus) from each 200 m cell to the nearest destination, averaged over departures every 10 min across the window.',
+  'acc.aboutMethod':
+    'Door-to-door time (walking and bus) from each 200 m cell to the nearest destination, averaged over departures every 10 min across the window.',
   'acc.error': 'The accessibility analysis could not be computed.',
   'acc.retry': 'Retry',
   'acc.loading': 'Computing accessibility',
@@ -484,7 +502,7 @@ export const en: Messages = {
   'acc.metric.income': 'Income per person',
   'acc.legend.time': 'Minutes to {dest}, walking and by bus',
   'acc.legend.gap': 'Minutes over the {min} min threshold',
-  'acc.legend.jobs': '% of the area\'s activity reachable in 30 min',
+  'acc.legend.jobs': "% of the area's activity reachable in 30 min",
   'acc.legend.income': 'Euros per person per year (INE)',
   'acc.legend.within': 'Within',
   'acc.legend.over': '+{n} min',
@@ -512,11 +530,16 @@ export const en: Messages = {
   'acc.legendDest.industrial_estate': 'the nearest industrial estate',
   'acc.legendDest.secondary_school': 'the nearest secondary school',
   'acc.legendDest.supermarket': 'the nearest supermarket',
-  'note.demand_gravity': 'Demand is modelled, not observed: there is no public origin-destination matrix, so trips follow a gravity model built from population and activity.',
-  'note.population_dasymetric': 'Population per 200 m cell is estimated by spreading each census section\'s residents over its residential floor area (INE 2024, Navarra cadastre).',
-  'note.activity_proxy': 'Activity is non-residential floor area, a proxy for jobs and services, not actual employment.',
-  'note.schedule_based': 'Travel times come from the published timetable: no delays, crowding or fares; access to stops is on foot only.',
-  'note.cost_tariff': 'Costs use the operator tariff of the pre-2024 concession (2023 prices); the current contract\'s unit prices are not public.',
+  'note.demand_gravity':
+    'Demand is modelled, not observed: there is no public origin-destination matrix, so trips follow a gravity model built from population and activity.',
+  'note.population_dasymetric':
+    "Population per 200 m cell is estimated by spreading each census section's residents over its residential floor area (INE 2024, Navarra cadastre).",
+  'note.activity_proxy':
+    'Activity is non-residential floor area, a proxy for jobs and services, not actual employment.',
+  'note.schedule_based':
+    'Travel times come from the published timetable: no delays, crowding or fares; access to stops is on foot only.',
+  'note.cost_tariff':
+    "Costs use the operator tariff of the pre-2024 concession (2023 prices); the current contract's unit prices are not public.",
   'note.stop_weight': 'Stop weights are residents within a 5-minute walk, not observed boardings.',
   'common.close': 'Close',
   'common.min': 'min',
@@ -719,18 +742,24 @@ export const eu: Messages = {
   'acc.curve': 'Iritsitako biztanleria denboraren arabera',
   'acc.curveAria': 'Bidaia-denbora bakoitzean {dest} iristen den biztanleriaren proportzioa',
   'acc.equity': 'Ekitatea errentaren arabera',
-  'acc.equityLead': 'Mugaren barruko biztanleria, sekzio zentsaleko pertsona bakoitzeko errentaren kintilka.',
+  'acc.equityLead':
+    'Mugaren barruko biztanleria, sekzio zentsaleko pertsona bakoitzeko errentaren kintilka.',
   'acc.lowIncome': 'errenta baxua',
   'acc.highIncome': 'errenta altua',
   'acc.average': 'batez bestekoa',
   'acc.incomeRange': '{min} – {max} pertsonako · {pop} biztanle',
-  'acc.ci.higher': '{dest} iristeko aukera errenta altuetan pilatzen da (kontzentrazio-indizea {ci}).',
-  'acc.ci.lower': '{dest} iristeko aukera errenta baxuetan pilatzen da (kontzentrazio-indizea {ci}).',
-  'acc.ci.similar': '{dest} iristeko aukera antzekoa da errenta-maila guztietan (kontzentrazio-indizea {ci}).',
+  'acc.ci.higher':
+    '{dest} iristeko aukera errenta altuetan pilatzen da (kontzentrazio-indizea {ci}).',
+  'acc.ci.lower':
+    '{dest} iristeko aukera errenta baxuetan pilatzen da (kontzentrazio-indizea {ci}).',
+  'acc.ci.similar':
+    '{dest} iristeko aukera antzekoa da errenta-maila guztietan (kontzentrazio-indizea {ci}).',
   'acc.underservedTitle': 'Zerbitzu txarra duen biztanleria',
-  'acc.underserved': '{n} biztanle ({pct}) ez dira {min} minututan iristen gutxienez funtsezko helmuga batera: {list}.',
+  'acc.underserved':
+    '{n} biztanle ({pct}) ez dira {min} minututan iristen gutxienez funtsezko helmuga batera: {list}.',
   'acc.about': 'Analisi honi buruz',
-  'acc.aboutMethod': 'Atez ateko denbora (oinez eta autobusez) 200 m-ko gelaxka bakoitzetik helmuga hurbilenera, leihoko 10 minuturoko irteeren batez bestekoa.',
+  'acc.aboutMethod':
+    'Atez ateko denbora (oinez eta autobusez) 200 m-ko gelaxka bakoitzetik helmuga hurbilenera, leihoko 10 minuturoko irteeren batez bestekoa.',
   'acc.error': 'Ezin izan da irisgarritasuna kalkulatu.',
   'acc.retry': 'Berriro saiatu',
   'acc.loading': 'Irisgarritasuna kalkulatzen',
@@ -773,12 +802,18 @@ export const eu: Messages = {
   'acc.legendDest.industrial_estate': 'industrialde hurbilenera',
   'acc.legendDest.secondary_school': 'institutu hurbilenera',
   'acc.legendDest.supermarket': 'supermerkatu hurbilenera',
-  'note.demand_gravity': 'Eskaria modelatuta dago, ez behatuta: ez dago jatorri-helmuga matrize publikorik, beraz bidaiek biztanleria eta jardueran oinarritutako eredu grabitatorio bat jarraitzen dute.',
-  'note.population_dasymetric': '200 m-ko gelaxka bakoitzeko biztanleria sekzio zentsal bakoitzeko biztanleak bizitegi-azaleraren arabera banatuz kalkulatzen da (INE 2024, Nafarroako katastroa).',
-  'note.activity_proxy': 'Jarduera bizitegikoa ez den azalera da, enpleguen eta zerbitzuen hurbilketa bat, ez benetako enplegua.',
-  'note.schedule_based': 'Denborak argitaratutako ordutegitik datoz: atzerapenik, okupaziorik edo tarifarik gabe; geltokietara oinez bakarrik iristen da.',
-  'note.cost_tariff': 'Kostuek 2024 aurreko emakidako operadorearen tarifa erabiltzen dute (2023ko prezioak); egungo kontratuaren prezio unitarioak ez dira publikoak.',
-  'note.stop_weight': 'Geltoki bakoitzaren pisua oinez 5 minutura bizi diren biztanleak dira, ez behatutako igoerak.',
+  'note.demand_gravity':
+    'Eskaria modelatuta dago, ez behatuta: ez dago jatorri-helmuga matrize publikorik, beraz bidaiek biztanleria eta jardueran oinarritutako eredu grabitatorio bat jarraitzen dute.',
+  'note.population_dasymetric':
+    '200 m-ko gelaxka bakoitzeko biztanleria sekzio zentsal bakoitzeko biztanleak bizitegi-azaleraren arabera banatuz kalkulatzen da (INE 2024, Nafarroako katastroa).',
+  'note.activity_proxy':
+    'Jarduera bizitegikoa ez den azalera da, enpleguen eta zerbitzuen hurbilketa bat, ez benetako enplegua.',
+  'note.schedule_based':
+    'Denborak argitaratutako ordutegitik datoz: atzerapenik, okupaziorik edo tarifarik gabe; geltokietara oinez bakarrik iristen da.',
+  'note.cost_tariff':
+    'Kostuek 2024 aurreko emakidako operadorearen tarifa erabiltzen dute (2023ko prezioak); egungo kontratuaren prezio unitarioak ez dira publikoak.',
+  'note.stop_weight':
+    'Geltoki bakoitzaren pisua oinez 5 minutura bizi diren biztanleak dira, ez behatutako igoerak.',
   'common.close': 'Itxi',
   'common.min': 'min',
   'common.km': 'km',
