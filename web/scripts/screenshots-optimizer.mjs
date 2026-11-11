@@ -70,7 +70,9 @@ try {
   // ------------------------------------------------------------------ light: setup → run → result
   const ctx = await newContext('light');
   const page = await ctx.newPage();
-  page.on('pageerror', (e) => console.log('  pageerror:', e.message));
+  page.on('pageerror', (e) =>
+    console.log('  pageerror:', (e.stack || e.message).split('\n').slice(0, 9).join(' <- ')),
+  );
   page.on(
     'console',
     (m) => m.type() === 'error' && console.log('  console.error:', m.text().slice(0, 160)),

@@ -93,6 +93,9 @@ export function MapCanvas({ children }: { children?: ReactNode }) {
     let cancelled = false;
     void loadBasemapStyle(theme).then((style) => {
       if (cancelled || !mapRef.current) return;
+      // Until the new style has loaded, sources and layers cannot be added ("Style is not
+      // done loading"): hide the map from consumers; `style.load` publishes it again.
+      setCtx((c) => ({ ...c, map: null }));
       mapRef.current.setStyle(style, { diff: false });
     });
     return () => {

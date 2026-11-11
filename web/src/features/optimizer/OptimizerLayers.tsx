@@ -303,7 +303,13 @@ export function OptimizerLayers() {
         geometry: { type: 'LineString', coordinates: n.path },
       };
       if (src) src.setData(fc);
-      else map.addSource(id, { type: 'geojson', data: fc, lineMetrics: true });
+      else {
+        try {
+          map.addSource(id, { type: 'geojson', data: fc, lineMetrics: true });
+        } catch {
+          return; // style mid-reload: this effect runs again on style.load
+        }
+      }
       ensureLayer(
         map,
         {
