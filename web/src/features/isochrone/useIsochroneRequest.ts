@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useIsochrone } from '@/api/queries';
 import type { IsochroneRequest } from '@/api/types';
 import { useApp } from '@/app/store';
+import { useActiveScenario } from '@/features/scenario/store';
 
 export const CUTOFFS = [900, 1800, 2700] as const;
 export const ISO_WINDOW = 3600;
@@ -15,6 +16,7 @@ export function useIsochroneRequest(): IsochroneRequest | null {
   const start = useApp((s) => s.isoStart);
   const day = useApp((s) => s.day);
   const mode = useApp((s) => s.isoMode);
+  const scenario = useActiveScenario();
   return useMemo(
     () =>
       origin
@@ -22,11 +24,11 @@ export function useIsochroneRequest(): IsochroneRequest | null {
             origin: [Math.round(origin[0] * 1e5) / 1e5, Math.round(origin[1] * 1e5) / 1e5],
             window: { day, start, duration: ISO_WINDOW },
             cutoffs: [...CUTOFFS],
-            scenario: null,
+            scenario,
             mode,
           }
         : null,
-    [origin, start, day, mode],
+    [origin, start, day, mode, scenario],
   );
 }
 

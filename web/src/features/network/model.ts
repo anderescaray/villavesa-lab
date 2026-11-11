@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { useNetwork, useVehicles } from '@/api/queries';
 import type { Network, Route, Stop, Vehicles } from '@/api/types';
 import { useApp, type Theme } from '@/app/store';
+import { useActiveScenario } from '@/features/scenario/store';
 import { BASEMAP_PALETTES } from '@/map/basemap';
 import { ensureContrast } from '@/lib/color';
 import {
@@ -90,14 +91,16 @@ export function buildVehicleModel(v: Vehicles): VehicleModel {
 
 export function useNetworkModel() {
   const day = useApp((s) => s.day);
-  const q = useNetwork(day);
+  const scenario = useActiveScenario();
+  const q = useNetwork(day, scenario);
   const model = useMemo(() => (q.data ? buildNetworkModel(q.data) : null), [q.data]);
   return { model, query: q };
 }
 
 export function useVehicleModel() {
   const day = useApp((s) => s.day);
-  const q = useVehicles(day);
+  const scenario = useActiveScenario();
+  const q = useVehicles(day, scenario);
   const model = useMemo(() => (q.data ? buildVehicleModel(q.data) : null), [q.data]);
   return { model, query: q };
 }
