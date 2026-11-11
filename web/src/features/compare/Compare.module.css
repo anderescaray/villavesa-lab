@@ -80,8 +80,9 @@
 }
 .label {
   position: absolute;
-  top: var(--space-4);
+  top: 50%;
   z-index: 3;
+  margin-top: -14px;
   max-width: 260px;
   padding: 6px var(--space-3);
   overflow: hidden;
@@ -96,12 +97,16 @@
   pointer-events: none;
 }
 .labelLeft {
-  right: calc(100% - var(--cut) + 20px);
+  right: calc(100% - var(--cut) + 28px);
+  max-width: min(260px, calc(var(--cut) - var(--map-left, 0px) - 44px));
 }
 .labelRight {
-  left: calc(var(--cut) + 20px);
+  left: calc(var(--cut) + 28px);
+  max-width: min(260px, calc(100% - var(--cut) - 44px));
 }
 .labelSingle {
+  top: var(--space-4);
+  margin-top: 0;
   left: calc(var(--map-left, 0px) + var(--space-4));
 }
 .loading {

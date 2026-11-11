@@ -21,6 +21,7 @@ import {
   toast,
 } from '@/components/ui';
 import { CATEGORY_ORDER } from '@/features/accessibility/model';
+import { translateWarning, warningNames } from '@/features/scenario/warnings';
 import { summarize } from '@/features/editor/model';
 import type { ScenarioEdit } from '@/api/scenario';
 import { THRESHOLD } from '@/features/optimizer/store';
@@ -167,7 +168,16 @@ export function ComparePanel() {
                 <h2 className={s.sectionTitle}>{t('cmp.warnings')}</h2>
                 <ul className={s.warnings}>
                   {ev.warnings.map((w, i) => (
-                    <li key={i}>{w}</li>
+                    <li key={i}>
+                      {translateWarning(
+                        w,
+                        t,
+                        warningNames(
+                          [data.proposal, data.today],
+                          (data.scenario ?? []) as ScenarioEdit[],
+                        ),
+                      )}
+                    </li>
                   ))}
                 </ul>
               </section>

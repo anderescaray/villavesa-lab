@@ -3,6 +3,9 @@ import type { Lang } from '@/i18n/dict';
 const LOCALES: Record<Lang, string> = { es: 'es-ES', en: 'en-GB', eu: 'eu-ES' };
 export const localeOf = (lang: Lang) => LOCALES[lang];
 
+/** Typographic minus (U+2212) instead of the hyphen-minus Intl emits. */
+export const fixMinus = (text: string) => text.replace(/[-\u2010-\u2013](?=\d)/g, '\u2212');
+
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** Seconds since service-day midnight → "HH:MM" (wraps past 24 h: 25:10 → "01:10"). */
@@ -43,17 +46,23 @@ export function formatDuration(seconds: number | null | undefined): string {
 export function formatMinutes(seconds: number | null | undefined, lang: Lang): string {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return '—';
   const m = seconds / 60;
-  return new Intl.NumberFormat(localeOf(lang), {
-    maximumFractionDigits: m < 10 && m % 1 !== 0 ? 1 : 0,
-  }).format(m);
+  return fixMinus(
+    new Intl.NumberFormat(localeOf(lang), {
+      maximumFractionDigits: m < 10 && m % 1 !== 0 ? 1 : 0,
+      useGrouping: 'always',
+    }).format(m),
+  );
 }
 
 export function formatNumber(n: number | null | undefined, lang: Lang, digits = 0): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return '—';
-  return new Intl.NumberFormat(localeOf(lang), {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: digits,
-  }).format(n);
+  return fixMinus(
+    new Intl.NumberFormat(localeOf(lang), {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: digits,
+      useGrouping: 'always',
+    }).format(n),
+  );
 }
 
 /** Compact population-like numbers: 12 345 → "12,3 mil" / "12.3k". */
@@ -72,15 +81,20 @@ export function formatPercent(share: number | null | undefined, lang: Lang, digi
     style: 'percent',
     maximumFractionDigits: digits,
     minimumFractionDigits: digits,
-  }).format(share);
+  })
+    .format(share)
+    .replace(/[-\u2010-\u2013](?=\d)/g, '\u2212');
 }
 
 export function formatCurrency(eur: number, lang: Lang): string {
-  return new Intl.NumberFormat(localeOf(lang), {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(eur);
+  return fixMinus(
+    new Intl.NumberFormat(localeOf(lang), {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+      useGrouping: 'always',
+    }).format(eur),
+  );
 }
 
 /** Current time of day in Europe/Madrid, as seconds since local midnight. */

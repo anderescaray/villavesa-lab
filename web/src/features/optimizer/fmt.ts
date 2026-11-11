@@ -1,6 +1,6 @@
 /** Number formatting shared by the optimizer and compare views (locale-aware, signed). */
 import type { Lang } from '@/i18n/dict';
-import { formatNumber } from '@/lib/format';
+import { fixMinus, formatNumber } from '@/lib/format';
 
 const MINUS = '−';
 
@@ -34,12 +34,15 @@ export function formatSignedTime(sec: number | null | undefined, lang: Lang): st
 /** Euros without decimals, compacted from 10 000 ("811 k€" style is avoided: plain "811 mil €"). */
 export function formatEuros(eur: number | null | undefined, lang: Lang): string {
   if (eur === null || eur === undefined || !Number.isFinite(eur)) return '—';
-  return new Intl.NumberFormat(lang === 'es' ? 'es-ES' : lang === 'eu' ? 'eu-ES' : 'en-GB', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-    notation: Math.abs(eur) >= 100_000 ? 'compact' : 'standard',
-  }).format(eur);
+  return fixMinus(
+    new Intl.NumberFormat(lang === 'es' ? 'es-ES' : lang === 'eu' ? 'eu-ES' : 'en-GB', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+      notation: Math.abs(eur) >= 100_000 ? 'compact' : 'standard',
+      useGrouping: 'always',
+    }).format(eur),
+  );
 }
 
 /** Signed euros with a real minus sign ("+34.000 €" / "\u221234.000 €"). */

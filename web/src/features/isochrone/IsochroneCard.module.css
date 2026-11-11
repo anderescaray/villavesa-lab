@@ -149,3 +149,13 @@
     max-height: calc(100% - 64px - 240px);
   }
 }
+
+/* tablet and below: keep the floating card, but narrower and with a guaranteed gutter.
+   (A bottom-sheet variant left part of the WebGL map unpainted in headless Chromium and
+   could not be verified on a real GPU, so the known-good layout is kept.) */
+@media (max-width: 900px) {
+  .card {
+    width: min(300px, calc(100vw - var(--map-left, 0px) - 2 * var(--space-4)));
+    max-height: calc(100% - 64px - 190px);
+  }
+}

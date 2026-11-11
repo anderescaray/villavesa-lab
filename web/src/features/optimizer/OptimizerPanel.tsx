@@ -842,15 +842,19 @@ function Explanation({ last }: { last: StoredResult }) {
                       />
                     </span>
                     <span className={s.itemMain}>
-                      <span className={s.itemTitle}>
-                        {displayName(String(it.params.from ?? ''))}
-                        <ArrowRight strokeWidth={1.75} aria-hidden />
-                        {displayName(String(it.params.to ?? ''))}
+                      <span
+                        className={s.itemEnds}
+                        title={`${displayName(String(it.params.from ?? ''))} → ${displayName(String(it.params.to ?? ''))}`}
+                      >
+                        <span>{displayName(String(it.params.from ?? ''))}</span>
+                        <span>
+                          <ArrowRight strokeWidth={1.75} aria-hidden />
+                          {displayName(String(it.params.to ?? ''))}
+                        </span>
                       </span>
                       <span className={s.itemSub}>
                         {t('opt.newLineMeta', {
                           min: formatNumber(Number(it.params.headway ?? 0) / 60, lang, 0),
-                          fleet: formatNumber(Number(it.params.fleet ?? 0), lang, 0),
                           km: formatNumber(Number(it.params.length_km ?? 0), lang, 1),
                           stops: formatNumber(Number(it.params.n_stops ?? 0), lang, 0),
                         })}

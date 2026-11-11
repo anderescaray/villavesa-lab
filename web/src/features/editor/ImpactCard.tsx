@@ -8,7 +8,9 @@ import { ArrowDownRight, ArrowUpRight, CloudOff, TriangleAlert } from 'lucide-re
 import { useCallback } from 'react';
 import { useApp } from '@/app/store';
 import { AnimatedNumber, Select, Skeleton, Stat, Surface, Switch } from '@/components/ui';
+import { useNetworkModel } from '@/features/network/model';
 import { useScenario } from '@/features/scenario/store';
+import { translateWarning, warningNames } from '@/features/scenario/warnings';
 import { poiLabel, useT } from '@/i18n';
 import { formatClock, formatCurrency, formatNumber, formatPercent } from '@/lib/format';
 import { DIVERGING } from '@/lib/palettes';
@@ -30,6 +32,8 @@ export function ImpactCard() {
   const windowStart = useEditor((st) => st.windowStart);
   const setEd = useEditor((st) => st.set);
   const { data, stale, computing, error, threshold } = useLiveEvaluation();
+  const edits = useScenario((st) => st.edits);
+  const { model: netModel } = useNetworkModel();
 
   const fmtInt = useCallback((n: number) => formatNumber(Math.round(n), lang), [lang]);
   const fmtSigned = useCallback(
@@ -38,10 +42,12 @@ export function ImpactCard() {
   );
   const fmtSignedSec = useCallback(
     (n: number) =>
-      Math.abs(n) >= 90
-        ? `${sign(n)}${formatNumber(Math.abs(n) / 60, lang, 1)} min`
-        : `${sign(Math.round(n))}${formatNumber(Math.abs(Math.round(n)), lang)} s`,
-    [lang],
+      Math.abs(n) < 5
+        ? t('editor.impact.noChange')
+        : Math.abs(n) >= 90
+          ? `${sign(n)}${formatNumber(Math.abs(n) / 60, lang, 1)} min`
+          : `${sign(Math.round(n))}${formatNumber(Math.abs(Math.round(n)), lang)} s`,
+    [lang, t],
   );
   const fmtSigned1 = useCallback(
     (n: number) => `${sign(n)}${formatNumber(Math.abs(n), lang, 1)}`,
@@ -166,7 +172,11 @@ export function ImpactCard() {
             {data.warnings.length ? (
               <div className={s.notice} style={{ marginTop: 12 }} role="status">
                 <TriangleAlert strokeWidth={1.75} />
-                <span>{data.warnings.slice(0, 3).join(' · ')}</span>
+                <div className={s.noticeList}>
+                  {data.warnings.slice(0, 3).map((w, i) => (
+                    <span key={i}>{translateWarning(w, t, warningNames([netModel], edits))}</span>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
@@ -196,8 +206,11 @@ export function ImpactCard() {
         </div>
       </div>
       <div className={s.foot}>
-        <span>{computing ? t('editor.impact.computing') : t('editor.impact.vsBaseline')}</span>
-        {data ? <span>{formatNumber(data.elapsed_ms, lang)} ms</span> : null}
+        <span>
+          {computing
+            ? t('editor.impact.computing')
+            : `${t('editor.impact.vsBaseline')}${data ? ` · ${t('editor.impact.computedIn', { ms: formatNumber(data.elapsed_ms, lang) })}` : ''}`}
+        </span>
       </div>
     </Surface>
   );
