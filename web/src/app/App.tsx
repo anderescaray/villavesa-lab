@@ -7,6 +7,9 @@ import { EditorInteractions } from '@/features/editor/EditorInteractions';
 import { EditorLayers } from '@/features/editor/EditorLayers';
 import { ImpactCard } from '@/features/editor/ImpactCard';
 import { ToolPalette } from '@/features/editor/ToolPalette';
+import { CompareStage } from '@/features/compare/CompareStage';
+import { OptimizerLayers } from '@/features/optimizer/OptimizerLayers';
+import { OptimizerLegend } from '@/features/optimizer/OptimizerLegend';
 import { IsochroneCard } from '@/features/isochrone/IsochroneCard';
 import { IsochroneLayers } from '@/features/isochrone/IsochroneLayers';
 import { BusesLayer } from '@/features/network/BusesLayer';
@@ -47,7 +50,8 @@ function useInitialClock(initial: UrlState) {
       time: target,
       // analysis views read the clock as a time-of-day setting: they start paused
       playing:
-        useApp.getState().view !== 'accessibility' && (initial.play ?? !prefersReducedMotion()),
+        !['accessibility', 'optimizer', 'compare'].includes(useApp.getState().view) &&
+        (initial.play ?? !prefersReducedMotion()),
     });
   }, [model, initial]);
 }
@@ -82,6 +86,8 @@ export function App({ initial }: { initial: UrlState }) {
         <MapCanvas>
           <NetworkLayers />
           <AccessibilityLayers />
+          <OptimizerLayers />
+          <CompareStage />
           <IsochroneLayers />
           <BusesLayer />
           <MapInteractions />
@@ -96,6 +102,7 @@ export function App({ initial }: { initial: UrlState }) {
           <TopControls />
           <IsochroneCard />
           <AccessibilityLegend />
+          <OptimizerLegend />
           <MapControls />
           <TimeControl />
         </MapCanvas>

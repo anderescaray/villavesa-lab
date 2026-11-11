@@ -15,12 +15,21 @@ export function OptimizerLegend() {
   const diff = useDiff(view === 'optimizer');
   if (view !== 'optimizer' || !diff || !diff.evaluation || !diff.scenario.length) return null;
   const kinds = new Set(last?.result.explanation.map((e) => e.kind) ?? []);
-  const hasNew = diff.from === 'result' ? kinds.has('new_line') : !!diff.proposal?.routes.some((r) => r.added);
-  const hasStops = diff.from === 'result' ? kinds.has('stop') : !!diff.proposal?.network.stops.some((x) => x.removed);
+  const hasNew =
+    diff.from === 'result' ? kinds.has('new_line') : !!diff.proposal?.routes.some((r) => r.added);
+  const hasStops =
+    diff.from === 'result'
+      ? kinds.has('stop')
+      : !!diff.proposal?.network.stops.some((x) => x.removed);
   const p = DIVERGING[theme];
   const ramp = [p.pos[2]!, p.pos[1]!, p.pos[0]!, p.neg[2]!, p.neg[1]!, p.neg[0]!];
   return (
-    <Surface className={s.legend} role="group" aria-label={t('opt.legend')} data-testid="opt-legend">
+    <Surface
+      className={s.legend}
+      role="group"
+      aria-label={t('opt.legend')}
+      data-testid="opt-legend"
+    >
       <div className={s.legendTitle}>{t('opt.legend')}</div>
       <ul className={s.legendItems}>
         <li>

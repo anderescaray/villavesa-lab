@@ -163,14 +163,22 @@ const colorDist = (a: string, b: string) => {
 };
 
 export function newLinePalette(existing: string[], n = 6): string[] {
-  const scored = CANDIDATES.map((c) => ({
-    c,
-    d: Math.min(...existing.map((e) => colorDist(c, e)), 9999),
-  }));
-  return scored
-    .sort((a, b) => b.d - a.d)
-    .slice(0, n)
-    .map((x) => x.c);
+  // greedy max-min: each pick is the candidate farthest from existing lines AND earlier picks
+  const picked: string[] = [];
+  const pool = [...CANDIDATES];
+  while (picked.length < n && pool.length) {
+    let best = 0;
+    let bestD = -1;
+    pool.forEach((c, i) => {
+      const d = Math.min(...[...existing, ...picked].map((e) => colorDist(c, e)), 9999);
+      if (d > bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    picked.push(pool.splice(best, 1)[0]!);
+  }
+  return picked;
 }
 
 const LETTERS = 'ABCDEFGHJKMNPQRSTUVWXYZ';

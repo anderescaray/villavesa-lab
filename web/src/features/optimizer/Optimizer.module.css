@@ -124,9 +124,8 @@
 }
 .windowRow {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: 2px;
 }
 .windowValue {
   font-size: var(--text-13);
@@ -599,6 +598,9 @@
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   transform: translate(-50%, calc(-100% - 12px));
+}
+.tip[data-below='true'] {
+  transform: translate(-50%, 14px);
 }
 .tip strong {
   display: block;

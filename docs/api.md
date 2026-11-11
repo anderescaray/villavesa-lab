@@ -265,3 +265,7 @@ Self-contained HTML report (print-friendly; the browser's print dialog produces 
 - `/api/optimize/tradeoff`: points add `used` and `objective_pct`; `baseline` adds
   `mean_travel_time` and `share_within`.
 - `/api/report`: body also takes `threshold`; `scenario` may be empty.
+- `/api/vehicles` includes the previous service day's trips that run past midnight, shifted
+  by -24 h, so their times can be negative; this keeps the animation continuous at night.
+- GeoJSON features of `/api/zones` and `/api/sections` carry a top-level `id`; for zones it is
+  the zone index used by every zone-aligned array. `/api/pois` ids are integers.

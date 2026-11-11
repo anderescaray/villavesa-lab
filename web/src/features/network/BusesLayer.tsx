@@ -96,7 +96,7 @@ function render(st: BusRenderState) {
     return;
   }
   const { kinds, view } = useApp.getState();
-  if (view === 'accessibility' || useApp.getState().diffActive) {
+  if (view === 'accessibility' || view === 'scenario' || useApp.getState().diffActive) {
     // the analysis view is about the timetable as a whole: no moving buses competing with data
     deckRegistry.remove(BUS_LAYER_ID);
     deckRegistry.remove(HALO_LAYER_ID);

@@ -13,7 +13,7 @@
  * Network sources are scenario-aware already (useNetworkModel follows the scenario store).
  */
 import type { ExpressionSpecification, Map as MlMap } from 'maplibre-gl';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useZones } from '@/api/queries';
 import type { Evaluation, LonLat } from '@/api/types';
 import { useApp, type Theme } from '@/app/store';
@@ -434,6 +434,33 @@ export function EditorLayers() {
   const drag = useEditor((s) => s.drag);
   const pending = useEditor((s) => s.pendingStop);
   const draftGeo = useDraftGeometry();
+  const fitted = useRef('');
+
+  // a completed corridor brings the camera to it (once per corridor)
+  useEffect(() => {
+    if (!map || !model || !active || tool !== 'priority' || !routeId) return;
+    const route = model.routeById.get(routeId);
+    if (!route || !corridor.start || !corridor.end) return;
+    const key = `${routeId}|${corridor.start}|${corridor.end}`;
+    if (fitted.current === key) return;
+    fitted.current = key;
+    const c = corridorOf(route, corridor.start, corridor.end, direction);
+    if (!c || c.path.length < 2) return;
+    const xs = c.path.map((p) => p[0]);
+    const ys = c.path.map((p) => p[1]);
+    const left = window.innerWidth >= 1024 ? 416 + 80 : 80;
+    map.fitBounds(
+      [
+        [Math.min(...xs), Math.min(...ys)],
+        [Math.max(...xs), Math.max(...ys)],
+      ],
+      {
+        padding: { top: 120, bottom: 160, left, right: 380 },
+        maxZoom: 15.5,
+        duration: 250,
+      },
+    );
+  }, [map, model, active, tool, routeId, corridor, direction]);
 
   // sources + layers after each style load
   useEffect(() => {

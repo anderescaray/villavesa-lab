@@ -37,6 +37,7 @@ import { fitBounds, boundsOf } from '@/map/camera';
 import { useCompare } from '@/features/compare/store';
 import {
   formatEuros,
+  formatSignedEuros,
   formatMin1,
   formatSigned,
   formatSignedPct,
@@ -107,7 +108,11 @@ export function OptimizerPanel() {
       ) : last && !setup ? (
         <ResultView last={last} onRerun={() => setSetup(true)} />
       ) : (
-        <SetupView hasResult={!!last} onBack={() => setSetup(false)} onStarted={() => setSetup(false)} />
+        <SetupView
+          hasResult={!!last}
+          onBack={() => setSetup(false)}
+          onStarted={() => setSetup(false)}
+        />
       )}
     </div>
   );
@@ -274,7 +279,11 @@ function SetupView({
             ]}
           />
           <p className={s.hint}>
-            {t(settings.objective === 'accessibility' ? 'opt.objHint.accessibility' : 'opt.objHint.travel_time')}
+            {t(
+              settings.objective === 'accessibility'
+                ? 'opt.objHint.accessibility'
+                : 'opt.objHint.travel_time',
+            )}
           </p>
         </section>
 
@@ -403,7 +412,13 @@ function RunningView() {
       <div className={s.scroll} aria-busy="true" data-testid="opt-running">
         <div className={s.eyebrow}>{t('opt.title')}</div>
         <h1 className={s.question}>{t('opt.running')}</h1>
-        <div className={s.progress} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(run.progress * 100)}>
+        <div
+          className={s.progress}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(run.progress * 100)}
+        >
           <span style={{ transform: `scaleX(${Math.max(0.02, run.progress)})` }} />
         </div>
         {run.status === 'queued' ? (
@@ -413,12 +428,23 @@ function RunningView() {
         ) : null}
         <ol className={s.stageList} aria-label={t('opt.stages')}>
           {states.map(({ id, state }, i) => (
-            <li key={id} className={s.stage} data-state={state} aria-current={state === 'active' ? 'step' : undefined}>
+            <li
+              key={id}
+              className={s.stage}
+              data-state={state}
+              aria-current={state === 'active' ? 'step' : undefined}
+            >
               <span className={s.stageIcon}>
-                {state === 'done' ? <Check strokeWidth={2} aria-hidden /> : <span className={s.dot} />}
+                {state === 'done' ? (
+                  <Check strokeWidth={2} aria-hidden />
+                ) : (
+                  <span className={s.dot} />
+                )}
               </span>
               {t(`opt.stage.${id}` as MessageKey)}
-              {i === 0 ? <span className={s.elapsed}>{t('opt.seconds', { n: elapsed })}</span> : null}
+              {i === 0 ? (
+                <span className={s.elapsed}>{t('opt.seconds', { n: elapsed })}</span>
+              ) : null}
             </li>
           ))}
         </ol>
@@ -458,16 +484,33 @@ function HistoryChart({ plot }: { plot: { x: number[]; y: number[] } }) {
   const W = 320;
   const H = 96;
   const m = { l: 34, r: 6, t: 6, b: 16 };
-  const xs = linearScale([Math.min(...plot.x), Math.max(...plot.x, plot.x[0]! + 1)], [m.l, W - m.r]);
+  const xs = linearScale(
+    [Math.min(...plot.x), Math.max(...plot.x, plot.x[0]! + 1)],
+    [m.l, W - m.r],
+  );
   const [lo, hi] = yDomain(plot.y);
   const ys = linearScale([lo, hi], [H - m.b, m.t]);
-  const d = plot.x.map((x, i) => `${i ? 'L' : 'M'}${xs(x).toFixed(1)},${ys(plot.y[i]!).toFixed(1)}`).join('');
+  const d = plot.x
+    .map((x, i) => `${i ? 'L' : 'M'}${xs(x).toFixed(1)},${ys(plot.y[i]!).toFixed(1)}`)
+    .join('');
   const ticks = niceTicks(lo, hi, 3);
   return (
-    <svg className={s.chart} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('opt.historyAria')} data-testid="opt-history">
+    <svg
+      className={s.chart}
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-label={t('opt.historyAria')}
+      data-testid="opt-history"
+    >
       {ticks.map((v) => (
         <g key={v}>
-          <line className={v === 0 ? s.axisZero : s.axis} x1={m.l} x2={W - m.r} y1={ys(v)} y2={ys(v)} />
+          <line
+            className={v === 0 ? s.axisZero : s.axis}
+            x1={m.l}
+            x2={W - m.r}
+            y1={ys(v)}
+            y2={ys(v)}
+          />
           <text className={s.tick} x={m.l - 5} y={ys(v) + 3.5} textAnchor="end">
             {formatNumber(v, lang, Number.isInteger(v) ? 0 : 1)} %
           </text>
@@ -514,7 +557,7 @@ function Delta({
   text: string;
   lowerIsBetter?: boolean;
 }) {
-  const tone = Math.abs(value) < 1e-9 ? 'flat' : (value < 0) === lowerIsBetter ? 'good' : 'bad';
+  const tone = Math.abs(value) < 1e-9 ? 'flat' : value < 0 === lowerIsBetter ? 'good' : 'bad';
   return (
     <span className={s.delta} data-tone={tone}>
       {text}
@@ -556,7 +599,10 @@ function ResultView({ last, onRerun }: { last: StoredResult; onRerun: () => void
   const people = -ev.delta.underserved_population;
   const fmtN100 = useCallback((n: number) => formatNumber(Math.round(n / 100) * 100, lang), [lang]);
   const fmtPct = useCallback((n: number) => formatSignedPct(n, lang), [lang]);
-  const fmtSec = useCallback((n: number) => formatNumber(Math.round(Math.abs(n)), lang) + ' s', [lang]);
+  const fmtSec = useCallback(
+    (n: number) => formatNumber(Math.round(Math.abs(n)), lang) + '\u00a0s',
+    [lang],
+  );
 
   const metricTpl = timeObjective ? 'opt.metricTime' : 'opt.metricAcc';
   const headline = improved ? (
@@ -603,7 +649,9 @@ function ResultView({ last, onRerun }: { last: StoredResult; onRerun: () => void
           <div className={s.preview} data-testid="opt-preview">
             <span>
               {t('opt.previewing', {
-                budget: t(kind === 'fleet' ? 'opt.tipBudgetFleet' : 'opt.tipBudgetHours', { n: fmt(budget) }),
+                budget: t(kind === 'fleet' ? 'opt.tipBudgetFleet' : 'opt.tipBudgetHours', {
+                  n: fmt(budget),
+                }),
               })}
             </span>
             <Button size="sm" variant="ghost" onClick={() => setPreview({ kind: 'result' })}>
@@ -669,7 +717,7 @@ function ResultView({ last, onRerun }: { last: StoredResult; onRerun: () => void
               {formatEuros(ev.scenario.cost_eur_year, lang)}
               <Delta
                 value={ev.delta.cost_eur_year}
-                text={formatEuros(ev.delta.cost_eur_year, lang).replace(/^(?=\d)/, '+')}
+                text={formatSignedEuros(ev.delta.cost_eur_year, lang)}
               />
             </dd>
           </dl>
@@ -689,7 +737,12 @@ function ResultView({ last, onRerun }: { last: StoredResult; onRerun: () => void
           {t('opt.apply')}
         </Button>
         <div className={s.footerRow}>
-          <Button size="sm" variant="secondary" onClick={() => goCompare('compare')} data-testid="opt-compare">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => goCompare('compare')}
+            data-testid="opt-compare"
+          >
             <GitCompareArrows strokeWidth={1.5} />
             {t('opt.compare')}
           </Button>
@@ -719,11 +772,15 @@ function Explanation({ last }: { last: StoredResult }) {
   const todayQ = useNetwork(day, null);
   const today = useMemo(() => (todayQ.data ? buildNetworkModel(todayQ.data) : null), [todayQ.data]);
   const [all, setAll] = useState(false);
-  const groups = useMemo(() => groupExplanation(last.result.explanation), [last.result.explanation]);
+  const groups = useMemo(
+    () => groupExplanation(last.result.explanation),
+    [last.result.explanation],
+  );
   const max = maxContribution(last.result.explanation);
   const kind = last.result.budget.kind;
   const info = useCallback(
-    (id: string | null) => (id ? (diff?.proposal?.routeById.get(id) ?? today?.routeById.get(id)) : undefined),
+    (id: string | null) =>
+      id ? (diff?.proposal?.routeById.get(id) ?? today?.routeById.get(id)) : undefined,
     [diff?.proposal, today],
   );
   const flyTo = (routeId: string | null, stopId?: string) => {
@@ -734,7 +791,12 @@ function Explanation({ last }: { last: StoredResult }) {
     if (r) for (const p of r.patterns) for (const c of p.path) coords.push(c);
     else if (stopId) {
       const st = today?.stopById.get(stopId);
-      if (st) coords.push([st.lon, st.lat], [st.lon + 0.004, st.lat + 0.003], [st.lon - 0.004, st.lat - 0.003]);
+      if (st)
+        coords.push(
+          [st.lon, st.lat],
+          [st.lon + 0.004, st.lat + 0.003],
+          [st.lon - 0.004, st.lat - 0.003],
+        );
     }
     const b = boundsOf(coords);
     if (b) fitBounds(map, b);
@@ -746,7 +808,9 @@ function Explanation({ last }: { last: StoredResult }) {
   const res = (n: number) =>
     n === 0
       ? ''
-      : t(kind === 'fleet' ? 'opt.busesDelta' : 'opt.hoursDelta', { n: formatSigned(n, lang, kind === 'fleet' ? 0 : 1) });
+      : t(kind === 'fleet' ? 'opt.busesDelta' : 'opt.hoursDelta', {
+          n: formatSigned(n, lang, kind === 'fleet' ? 0 : 1),
+        });
 
   return (
     <section className={s.section} data-testid="opt-explanation">
@@ -771,7 +835,11 @@ function Explanation({ last }: { last: StoredResult }) {
                     onClick={() => flyTo(it.route_id)}
                   >
                     <span className={s.badgeBox}>
-                      <LineBadge shortName={String(it.params.route ?? r?.short_name ?? '+')} color={r?.color ?? '#1F6FEB'} textColor={r?.text_color} />
+                      <LineBadge
+                        shortName={String(it.params.route ?? r?.short_name ?? '+')}
+                        color={r?.color ?? '#1F6FEB'}
+                        textColor={r?.text_color}
+                      />
                     </span>
                     <span className={s.itemMain}>
                       <span className={s.itemTitle}>
@@ -819,17 +887,34 @@ function Explanation({ last }: { last: StoredResult }) {
                     onClick={() => flyTo(it.route_id)}
                   >
                     <span className={s.badgeBox}>
-                      <LineBadge shortName={c.route} color={r?.color ?? '#888888'} textColor={r?.text_color} />
+                      <LineBadge
+                        shortName={c.route}
+                        color={r?.color ?? '#888888'}
+                        textColor={r?.text_color}
+                      />
                     </span>
                     <span className={s.itemMain}>
                       <span className={s.itemTitle} data-dir={c.up ? 'up' : 'down'}>
-                        {c.up ? <ArrowUpRight strokeWidth={2} aria-hidden /> : <ArrowDownRight strokeWidth={2} aria-hidden />}
+                        {c.up ? (
+                          <ArrowUpRight strokeWidth={2} aria-hidden />
+                        ) : (
+                          <ArrowDownRight strokeWidth={2} aria-hidden />
+                        )}
                         {t('opt.every', { from: c.fromMin, to: c.toMin })}
                       </span>
                     </span>
                     <span className={s.itemRes}>{res(c.resource)}</span>
-                    <span className={s.contrib} data-neg={c.contribution < 0} aria-hidden title={t('opt.contribution')}>
-                      <span style={{ transform: `scaleX(${Math.max(0.03, Math.abs(c.contribution) / max)})` }} />
+                    <span
+                      className={s.contrib}
+                      data-neg={c.contribution < 0}
+                      aria-hidden
+                      title={t('opt.contribution')}
+                    >
+                      <span
+                        style={{
+                          transform: `scaleX(${Math.max(0.03, Math.abs(c.contribution) / max)})`,
+                        }}
+                      />
                     </span>
                   </button>
                 </li>
@@ -862,7 +947,9 @@ function Explanation({ last }: { last: StoredResult }) {
                 >
                   <span />
                   <span className={s.itemMain}>
-                    <span className={s.itemTitle}>{displayName(String(it.params.name ?? it.params.stop_id ?? ''))}</span>
+                    <span className={s.itemTitle}>
+                      {displayName(String(it.params.name ?? it.params.stop_id ?? ''))}
+                    </span>
                   </span>
                   <span />
                 </button>
@@ -888,7 +975,11 @@ function Tradeoff({ last }: { last: StoredResult }) {
   const setPreview = useOptimizer((st) => st.setPreview);
   const totals = useTodayTotals(null);
   const kind = tradeoff?.result.budget_kind ?? last.result.budget.kind;
-  const today = totals ? (last.result.budget.kind === 'fleet' ? totals.fleet : totals.bus_hours) : null;
+  const today = totals
+    ? last.result.budget.kind === 'fleet'
+      ? totals.fleet
+      : totals.bus_hours
+    : null;
   const reading = useMemo(() => (tradeoff ? readTradeoff(tradeoff.result) : null), [tradeoff]);
   const sel = preview.kind === 'point' ? preview.budget : null;
   const fmt = (n: number) => formatNumber(n, lang, 0);
@@ -899,7 +990,13 @@ function Tradeoff({ last }: { last: StoredResult }) {
       <p className={s.sectionLead}>{t('opt.tradeLead')}</p>
       {trade.phase === 'running' ? (
         <div aria-busy="true">
-          <div className={s.progress} role="progressbar" aria-valuenow={Math.round(trade.progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+          <div
+            className={s.progress}
+            role="progressbar"
+            aria-valuenow={Math.round(trade.progress * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <span style={{ transform: `scaleX(${Math.max(0.03, trade.progress)})` }} />
           </div>
           <Skeleton height={150} />
@@ -909,7 +1006,11 @@ function Tradeoff({ last }: { last: StoredResult }) {
         <>
           {tradeoff ? (
             <>
-              <TradeoffChart result={tradeoff.result} selected={sel} onSelect={(b) => setPreview({ kind: 'point', budget: b })} />
+              <TradeoffChart
+                result={tradeoff.result}
+                selected={sel}
+                onSelect={(b) => setPreview({ kind: 'point', budget: b })}
+              />
               {reading ? (
                 <p className={s.reading} data-testid="opt-reading">
                   {readingText(t, lang, reading, kind, fmt)}
@@ -918,7 +1019,11 @@ function Tradeoff({ last }: { last: StoredResult }) {
               <p className={s.hint}>{t('opt.pointHint')}</p>
             </>
           ) : null}
-          {trade.phase === 'error' ? <p className={s.note}>{t('opt.tradeError')}: {trade.error}</p> : null}
+          {trade.phase === 'error' ? (
+            <p className={s.note}>
+              {t('opt.tradeError')}: {trade.error}
+            </p>
+          ) : null}
           <Button
             variant="secondary"
             size="sm"
@@ -945,12 +1050,14 @@ function readingText(
 ): string {
   const parts: string[] = [];
   if (r.sameBudgetGain !== null && r.sameBudgetGain > 0.05)
-    parts.push(t('opt.readSame', { pct: formatSignedPct(r.sameBudgetGain, lang).replace(/^\+/, '') }));
+    parts.push(
+      t('opt.readSame', { pct: formatSignedPct(r.sameBudgetGain, lang).replace(/^\+/, '') }),
+    );
   if (r.breakEven)
     parts.push(
       t(kind === 'fleet' ? 'opt.readBreakEven' : 'opt.readBreakEvenHours', {
         n: fmt(r.breakEven.budget),
-        saved: `${formatNumber(r.breakEven.savedPct, lang, 0)} %`,
+        saved: `${formatNumber(r.breakEven.savedPct, lang, 0)}\u00a0%`,
       }),
     );
   if (r.marginal)

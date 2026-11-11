@@ -467,7 +467,7 @@
   display: flex;
   flex-direction: column;
   width: 320px;
-  max-height: calc(100% - 64px - 112px);
+  max-height: calc(100% - 64px - 232px);
   overflow: hidden;
 }
 .impactScroll {

@@ -16,19 +16,19 @@ export function formatSigned(n: number | null | undefined, lang: Lang, digits = 
 export const formatSignedPct = (pct: number | null | undefined, lang: Lang, digits = 1) =>
   pct === null || pct === undefined || !Number.isFinite(pct)
     ? '—'
-    : `${formatSigned(pct, lang, digits)} %`;
+    : `${formatSigned(pct, lang, digits)}\u00a0%`;
 
 /** Seconds as minutes with one decimal ("13,4 min"). */
 export const formatMin1 = (sec: number | null | undefined, lang: Lang) =>
   sec === null || sec === undefined || !Number.isFinite(sec)
     ? '—'
-    : `${formatNumber(sec / 60, lang, 1)} min`;
+    : `${formatNumber(sec / 60, lang, 1)}\u00a0min`;
 
 /** Signed seconds: "−22 s", switching to minutes from 2 min ("+3,5 min"). */
 export function formatSignedTime(sec: number | null | undefined, lang: Lang): string {
   if (sec === null || sec === undefined || !Number.isFinite(sec)) return '—';
-  if (Math.abs(sec) >= 120) return `${formatSigned(sec / 60, lang, 1)} min`;
-  return `${formatSigned(sec, lang, 0)} s`;
+  if (Math.abs(sec) >= 120) return `${formatSigned(sec / 60, lang, 1)}\u00a0min`;
+  return `${formatSigned(sec, lang, 0)}\u00a0s`;
 }
 
 /** Euros without decimals, compacted from 10 000 ("811 k€" style is avoided: plain "811 mil €"). */
@@ -40,4 +40,11 @@ export function formatEuros(eur: number | null | undefined, lang: Lang): string 
     maximumFractionDigits: 0,
     notation: Math.abs(eur) >= 100_000 ? 'compact' : 'standard',
   }).format(eur);
+}
+
+/** Signed euros with a real minus sign ("+34.000 €" / "\u221234.000 €"). */
+export function formatSignedEuros(eur: number | null | undefined, lang: Lang): string {
+  if (eur === null || eur === undefined || !Number.isFinite(eur)) return '\u2014';
+  if (Math.round(eur) === 0) return formatEuros(0, lang);
+  return `${eur > 0 ? '+' : '\u2212'}${formatEuros(Math.abs(eur), lang)}`;
 }

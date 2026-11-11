@@ -23,7 +23,12 @@ export function summaryRows(ev: Evaluation): TableRow[] {
   const b = ev.baseline;
   const s = ev.scenario;
   const idx = accessibilityIndex(ev);
-  const row = (id: string, before: number, after: number, better: TableRow['better']): TableRow => ({
+  const row = (
+    id: string,
+    before: number,
+    after: number,
+    better: TableRow['better'],
+  ): TableRow => ({
     id,
     before,
     after,
@@ -43,7 +48,10 @@ export function summaryRows(ev: Evaluation): TableRow[] {
 }
 
 /** Residents within the threshold per destination category, in display order. */
-export function categoryRows(ev: Evaluation, order: readonly string[]): (TableRow & { share: [number, number] })[] {
+export function categoryRows(
+  ev: Evaluation,
+  order: readonly string[],
+): (TableRow & { share: [number, number] })[] {
   const ids = Object.keys(ev.baseline.categories);
   const rank = (id: string) => {
     const i = order.indexOf(id);

@@ -4,6 +4,8 @@ import { IconButton } from '@/components/ui';
 import { AccessibilityPanel } from '@/features/accessibility/AccessibilityPanel';
 import { NetworkPanel } from '@/features/network/NetworkPanel';
 import { EditorPanel } from '@/features/editor/EditorPanel';
+import { ComparePanel } from '@/features/compare/ComparePanel';
+import { OptimizerPanel } from '@/features/optimizer/OptimizerPanel';
 import { PlannedView } from '@/features/views/PlannedView';
 import { useT } from '@/i18n';
 import { Wordmark } from './Brand';
@@ -35,6 +37,10 @@ export function SidePanel() {
           <AccessibilityPanel />
         ) : view === 'scenario' ? (
           <EditorPanel />
+        ) : view === 'optimizer' ? (
+          <OptimizerPanel />
+        ) : view === 'compare' ? (
+          <ComparePanel />
         ) : (
           <div className={s.panelScroll}>
             <PlannedView view={view} />

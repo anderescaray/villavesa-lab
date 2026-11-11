@@ -225,3 +225,82 @@ Question it answers: *who can reach what by bus today, and who is left out?*
 - **States.** Skeleton on the first load. The previous content is dimmed while refetching. On
   error, an inline message with retry. While the engine is loading (502/503/504), queries retry
   quietly every 1.5 s. URL keys: `cat`, `metric`, `thr` (minutes) next to `day` and `t`.
+
+## Scenario editor (M8)
+
+Screenshots: `docs/screenshots/editor-*.png` (`node web/scripts/screenshots-editor.mjs` against a
+running dev or preview server, `BASE_URL=…`).
+
+- **One working scenario for the whole app.** `features/scenario/store.ts` (zustand, persisted
+  to `localStorage` as `vlab.scenario.v1`) holds the ordered edit list, its name and undo/redo
+  history. `useActiveScenario()` feeds the network, vehicles and isochrone hooks, so every view
+  shows the edited network while edits exist. A "Scenario · N changes" chip in the top bar
+  (`ScenarioChip`) is visible in every view. It peeks at the baseline (eye) or discards the
+  scenario, and a discard can be undone. The Optimizer loads a proposal with `setEdits`.
+- **Layout.** The side panel holds the change list (compact rows with a line badge, a readable
+  summary, inline edit and delete) and the inspector of the active tool. The live impact sits on
+  a floating card at the right of the map, so it is always visible while editing. The tool
+  palette (Select · Frequency · Priority · Stop · Draw: `V F P S L`) is a vertical strip at the
+  top-left of the map, with a one-line hint for the active tool. Esc peels back one layer at a
+  time; ⌘/Ctrl+Z and ⇧⌘Z undo and redo.
+- **Map treatment.** The base network goes quiet as in the analysis view, and buses are hidden
+  so they do not compete with the data. Modified lines, the line under edit and the hovered line
+  are redrawn wide with a casing. New lines get a dashed centre line, and removed lines are ghosted
+  (grey, dashed) from the baseline geometry. Stops carry their state: removed (hollow, grey),
+  added (solid ink), or moved (thick ring with a dashed tether to the original spot).
+- **Delta choropleth.** The 200 m cells are coloured by Δ demand-weighted mean travel time on
+  the diverging palette (`DIVERGING`). Blue means faster, red means slower, and there are 3 steps
+  per arm with edges at 30 s, 1 min and 2 min. Cells with |Δ| < 30 s stay blank, so only
+  meaningful change shows. Colours live in feature-state, and the layer dims to 40 % while the
+  next evaluation computes.
+- **Live diff.** `/api/scenario/evaluate` is called 300 ms after the last change, and results
+  are cached by the canonical-JSON hash of the edit list. The previous numbers stay on screen,
+  dimmed, while the next result loads, and `elapsed_ms` is shown in the card footer. Gains and
+  losses always carry an arrow or a sign, so colour is never the only cue. A 422 from the API is
+  shown inline with its message.
+- **Drawing a line.** Each click adds a waypoint. Snapping is debounced (180 ms), and the raw
+  polyline shows faintly under the snapped path while a request is in flight. Existing stops
+  within the server's radius are proposed. Stops of the same name on both kerbs within 80 m count
+  as one, because a bidirectional line reverses the stop list. Each proposed stop can be toggled
+  off, and the "New stop" click mode adds stops of your own. Colours come from a candidate list
+  picked greedily to be as far as possible (redmean distance) from every GTFS line colour and from
+  each other.
+- **Known gaps.** Stop drag uses MapLibre pointer events and has no touch support. The
+  Accessibility view still requests the baseline (`scenario: null`). Edits are not in the URL;
+  `localStorage` is enough per the brief.
+
+## Optimizer view (M10)
+
+One question, one primary action. The panel asks "With the same N buses, what is the best
+network?" (the sentence follows the budget slider and unit) and exposes only: budget (fleet or
+bus-hours, -20 % to +20 %), what may change (frequencies, stop consolidation, new lines, each
+with a one-line explanation), the objective and the analysis window (read from the time control,
+shown explicitly). Time limit lives under "Advanced". **Optimizar** is the only red button.
+
+- **Running** shows the real stage list driven by the job's `stage` (ticks as stages complete),
+  a quiet log and a small live SVG of the objective versus evaluations. Cancel only stops
+  polling: the server has no cancel, and the UI says so.
+- **Result** is revealed on the map as an animated diff (about 1.4 s, replayable, instant under
+  `prefers-reduced-motion`): lines that gain frequency thicken and brighten, lines that lose it
+  thin and fade, new lines draw themselves (`line-gradient`), removed stops shrink away, then the
+  travel-time change choropleth (blue faster, red slower, only |change| >= 30 s) fades in. Line
+  state is feature-state (`p`), so a frame is a few dozen `setFeatureState` calls. The base
+  network steps back through `diffActive` in the app store.
+- The panel headline uses animated numbers, followed by key deltas and a ranked explanation
+  (line badge in GTFS colour, "every 11 min to every 7 min", buses freed or used, a bar for its
+  contribution). Hover or focus an item to isolate that line on the map; click to frame it.
+- **Budget versus benefit**: SVG chart, today's network as the red point at (today's budget, 0)
+  so the "same buses, better network" gap is a dashed bracket; click a point to preview it.
+  The sentence under it is computed (same-budget gain, break-even budget, diminishing returns).
+- The last result, settings and curve persist in localStorage (`vlab.optimizer.v1`).
+
+## Compare view (M10)
+
+Compares today with the editor's scenario (or, when the editor is empty, the optimizer's last
+proposal; a switch appears when both exist). The map area holds two MapLibre maps (today left,
+scenario right) clipped by a draggable divider (`clip-path`, role slider: arrows, Shift for big
+steps, Home/End). Their cameras follow the main map through a re-entrancy lock, so the zoom
+buttons and drag on any map keep all in sync. Content: network (line width proportional to daily
+trips), accessibility (time to the chosen destination each side) or the single difference map.
+The panel has the before/after table, people gaining/losing, changed lines, a plain-language
+change list and the report form (title, language; open, download, print/PDF via `/api/report`).

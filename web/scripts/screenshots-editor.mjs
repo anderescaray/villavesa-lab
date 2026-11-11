@@ -94,7 +94,7 @@ async function frequency(page) {
   const stops = page.getByTestId('priority-inspector').getByRole('listitem');
   await stops.nth(2).click();
   await stops.nth(9).click();
-  await page.evaluate(() => window.__vlabMap.jumpTo({ center: [-1.645, 42.812], zoom: 13.6 }));
+  await sleep(600);
   await shot(page, '03-priority');
   await page.getByTestId('priority-apply').click();
   await idle(page);

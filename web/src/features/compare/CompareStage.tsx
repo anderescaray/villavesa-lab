@@ -20,13 +20,12 @@ import { clockActions } from '@/features/time/clock';
 import { useT } from '@/i18n';
 import { DIVERGING } from '@/lib/palettes';
 import { BASEMAP_PALETTES, blankStyle, dataLayerAnchor, loadBasemapStyle } from '@/map/basemap';
-import { fitBounds } from '@/map/camera';
+import { boundsOf, fitBounds } from '@/map/camera';
 import { useMapContext } from '@/map/MapContext';
 import { ensureLayer, setGeoJSON } from '@/map/maplibreLayers';
 import { useCompare } from './store';
 import { maxTripsOf, nextSplit, splitFromPointer, tripWidth } from './model';
 import { useCompareData } from './useCompareData';
-import { useMeta } from '@/api/queries';
 import { Skeleton, Surface } from '@/components/ui';
 import { formatNumber } from '@/lib/format';
 import s from './Compare.module.css';
@@ -101,7 +100,11 @@ const zoomWidth = (f: (k: number) => ExpressionSpecification): ExpressionSpecifi
   f(8),
 ];
 
-function linesOf(model: NetworkModel | null, theme: Theme, maxTrips: number): GeoJSON.FeatureCollection {
+function linesOf(
+  model: NetworkModel | null,
+  theme: Theme,
+  maxTrips: number,
+): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
   if (model)
     for (const r of model.routes)
@@ -288,8 +291,14 @@ export function CompareStage() {
     () => maxTripsOf(data.today?.routes ?? [], data.proposal?.routes ?? []),
     [data.today, data.proposal],
   );
-  const beforeLines = useMemo(() => linesOf(data.today, theme, maxTrips), [data.today, theme, maxTrips]);
-  const afterLines = useMemo(() => linesOf(data.proposal, theme, maxTrips), [data.proposal, theme, maxTrips]);
+  const beforeLines = useMemo(
+    () => linesOf(data.today, theme, maxTrips),
+    [data.today, theme, maxTrips],
+  );
+  const afterLines = useMemo(
+    () => linesOf(data.proposal, theme, maxTrips),
+    [data.proposal, theme, maxTrips],
+  );
 
   const ev = data.evaluation.data;
   const zones = data.zones ?? null;
@@ -304,25 +313,23 @@ export function CompareStage() {
       ev.zones.id.forEach((zid, i) => {
         const pop = zones.features[zid]?.properties.population ?? 0;
         const c = deltaTimeColor(ev.zones.delta_time[i] ?? null, theme);
-        if (c && pop > 0) out[zid] = rgba(c, residentWeight(pop) * (theme === 'dark' ? 0.78 : 0.74));
+        if (c && pop > 0)
+          out[zid] = rgba(c, residentWeight(pop) * (theme === 'dark' ? 0.78 : 0.74));
       });
       return out;
     }
     return null;
   }, [mode, data.accScenario.data, category, theme, ev, zones]);
 
-  // initial framing: the service area, once the maps exist
-  const { data: meta } = useMeta();
+  // initial framing: the network itself, once the maps exist
   const framed = useRef(false);
   useEffect(() => {
     if (!show) framed.current = false;
-    if (!show || framed.current || !main || !meta) return;
+    if (!show || framed.current || !main || !data.today) return;
     framed.current = true;
-    fitBounds(main, [
-      [meta.bbox[0], meta.bbox[1]],
-      [meta.bbox[2], meta.bbox[3]],
-    ]);
-  }, [show, main, meta]);
+    const b = boundsOf(data.today.network.stops.map((st) => [st.lon, st.lat] as [number, number]));
+    if (b) fitBounds(main, b);
+  }, [show, main, data.today]);
 
   const onPointer = useCallback(
     (e: React.PointerEvent) => {
@@ -430,7 +437,15 @@ export function CompareStage() {
 
 // ------------------------------------------------------------------------------ legend
 
-function CompareLegend({ mode, category, accNow }: { mode: string; category: string; accNow: boolean }) {
+function CompareLegend({
+  mode,
+  category,
+  accNow,
+}: {
+  mode: string;
+  category: string;
+  accNow: boolean;
+}) {
   const t = useT();
   const theme = useApp((st) => st.theme);
   const lang = useApp((st) => st.lang);

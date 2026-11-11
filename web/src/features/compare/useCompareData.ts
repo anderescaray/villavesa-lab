@@ -32,7 +32,13 @@ export function useCompareData(enabled = true) {
     optimizer: !!last?.result.scenario.length,
   };
   const source: CompareSource | null =
-    pref && available[pref] ? pref : available.store ? 'store' : available.optimizer ? 'optimizer' : null;
+    pref && available[pref]
+      ? pref
+      : available.store
+        ? 'store'
+        : available.optimizer
+          ? 'optimizer'
+          : null;
 
   const scenario = useMemo<Edit[] | null>(() => {
     if (source === 'store') return edits as unknown as Edit[];
@@ -50,7 +56,10 @@ export function useCompareData(enabled = true) {
         : '';
 
   const window = useMemo(() => ({ day, start, duration: ACC_WINDOW }), [day, start]);
-  const key = useMemo(() => (scenario ? scenarioHash(scenario as ScenarioEdit[]) : 'none'), [scenario]);
+  const key = useMemo(
+    () => (scenario ? scenarioHash(scenario as ScenarioEdit[]) : 'none'),
+    [scenario],
+  );
   const evaluation = useEvaluation(
     enabled && scenario ? (scenario as ScenarioEdit[]) : null,
     key,
@@ -60,7 +69,10 @@ export function useCompareData(enabled = true) {
   const todayQ = useNetwork(day, null);
   const scenQ = useNetwork(day, enabled ? scenario : null);
   const today = useMemo(() => (todayQ.data ? buildNetworkModel(todayQ.data) : null), [todayQ.data]);
-  const proposal = useMemo(() => (scenQ.data && scenario ? buildNetworkModel(scenQ.data) : null), [scenQ.data, scenario]);
+  const proposal = useMemo(
+    () => (scenQ.data && scenario ? buildNetworkModel(scenQ.data) : null),
+    [scenQ.data, scenario],
+  );
 
   const wantAcc = enabled && mode === 'access' && !!scenario;
   const accToday = useAccessibilityQuery(

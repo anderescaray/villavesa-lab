@@ -3,7 +3,7 @@ import type { TradeoffPoint, TradeoffResult } from '@/api/optimizer';
 import { useApp } from '@/app/store';
 import { useT } from '@/i18n';
 import { formatNumber, formatPercent } from '@/lib/format';
-import { formatMin1, formatSignedPct } from './fmt';
+import { formatMin1, formatSigned, formatSignedPct } from './fmt';
 import { linearScale, niceTicks, yDomain } from './model';
 import s from './Optimizer.module.css';
 
@@ -46,7 +46,9 @@ export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps
   const same = pts.find((p) => Math.abs(p.budget - today) < 1e-6);
   const kind = result.budget_kind;
   const fmtBudget = (n: number) => formatNumber(n, lang, kind === 'fleet' ? 0 : 0);
-  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.budget).toFixed(1)},${y(p.objective_pct).toFixed(1)}`).join('');
+  const path = pts
+    .map((p, i) => `${i ? 'L' : 'M'}${x(p.budget).toFixed(1)},${y(p.objective_pct).toFixed(1)}`)
+    .join('');
   const hovered = hover !== null ? pts[hover] : null;
   const label = (p: TradeoffPoint) =>
     `${kind === 'fleet' ? t('opt.tipBudgetFleet', { n: fmtBudget(p.budget) }) : t('opt.tipBudgetHours', { n: fmtBudget(p.budget) })}: ${t('opt.tipAcc', { pct: formatSignedPct(p.objective_pct, lang) })}`;
@@ -73,7 +75,7 @@ export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps
               y2={y(v)}
             />
             <text className={s.tick} x={M.l - 6} y={y(v) + 3.5} textAnchor="end">
-              {formatNumber(v, lang, Number.isInteger(v) ? 0 : 1)} %
+              {formatSigned(v, lang, Number.isInteger(v) ? 0 : 1).replace(/^\+/, '')}\u00a0%
             </text>
           </g>
         ))}
@@ -94,8 +96,18 @@ export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps
         </text>
         {same && same.objective_pct > 0.05 ? (
           <g>
-            <line className={s.gap} x1={x(today)} x2={x(today)} y1={y(0)} y2={y(same.objective_pct)} />
-            <text className={s.gapLabel} x={x(today) + 6} y={(y(0) + y(same.objective_pct)) / 2 + 3}>
+            <line
+              className={s.gap}
+              x1={x(today)}
+              x2={x(today)}
+              y1={y(0)}
+              y2={y(same.objective_pct)}
+            />
+            <text
+              className={s.gapLabel}
+              x={x(today) + 6}
+              y={(y(0) + y(same.objective_pct)) / 2 + 3}
+            >
               {formatSignedPct(same.objective_pct, lang)}
             </text>
           </g>
@@ -140,9 +152,10 @@ export function TradeoffChart({ result, selected, onSelect }: TradeoffChartProps
       {hovered ? (
         <div
           className={s.tip}
+          data-below={y(hovered.objective_pct) < H * 0.55}
           role="status"
           style={{
-            left: `${Math.min(Math.max(x(hovered.budget), 96), W - 96) / W * 100}%`,
+            left: `${(Math.min(Math.max(x(hovered.budget), 96), W - 96) / W) * 100}%`,
             top: `${(y(hovered.objective_pct) / H) * 100}%`,
           }}
         >

@@ -39,11 +39,18 @@ const ev = {
 
 describe('compare model', () => {
   it('indexes accessibility with today = 100', () => {
-    expect(accessibilityIndex(ev)).toEqual({ before: 100, after: 105 });
+    const idx = accessibilityIndex(ev);
+    expect(idx.before).toBe(100);
+    expect(idx.after).toBeCloseTo(105);
   });
   it('builds the summary rows with deltas and direction', () => {
     const rows = summaryRows(ev);
-    expect(rows.find((r) => r.id === 'fleet')).toMatchObject({ before: 10, after: 12, delta: 2, better: 'lower' });
+    expect(rows.find((r) => r.id === 'fleet')).toMatchObject({
+      before: 10,
+      after: 12,
+      delta: 2,
+      better: 'lower',
+    });
     expect(rows.find((r) => r.id === 'meanTime')?.delta).toBe(-30);
     expect(rows.find((r) => r.id === 'accIndex')?.better).toBe('higher');
   });

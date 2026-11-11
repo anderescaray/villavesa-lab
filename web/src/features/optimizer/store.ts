@@ -22,7 +22,8 @@ import {
 import type { AnalysisWindow, Edit } from '@/api/types';
 import { TRADEOFF_PCTS, budgetValue } from './model';
 
-export type TimeLimit = 30 | 60 | 120;
+/** seconds; the UI offers 30 / 60 / 120 (tests use 10) */
+export type TimeLimit = number;
 
 export interface OptSettings {
   budgetKind: BudgetKind;
