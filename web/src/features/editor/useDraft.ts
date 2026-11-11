@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSnap, type AddRouteEdit, type ScenarioEdit, type SnapResponse } from '@/api/scenario';
 import type { LonLat } from '@/api/types';
 import { useNetworkModel } from '@/features/network/model';
+import { setDraftRows } from './actions';
 import { distanceM, newRouteId, project } from './model';
 import { useEditor, type Draft, type DraftStop } from './state';
 
@@ -81,6 +82,7 @@ export function useDraftStops(): { rows: DraftStopRow[]; snap: SnapResponse | un
     }));
     return [...proposed, ...placed].sort((a, b) => a.offset - b.offset);
   }, [draft, snap, model]);
+  useEffect(() => setDraftRows(rows), [rows]);
   return { rows, snap };
 }
 
