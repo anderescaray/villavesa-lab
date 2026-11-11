@@ -486,3 +486,29 @@ def test_degenerate_new_route_is_rejected(model: Model) -> None:
                 ]
             ),
         )
+
+
+def test_more_frequency_is_a_superset_so_nobody_is_slower(
+    model: Model, base: Timetable, evaluator: Evaluator
+) -> None:
+    """Adding service keeps every existing departure: no zone pair can get slower."""
+    sn = apply(
+        model, "weekday", parse_edits([{"type": "set_headway", "route_id": "4", "headway": 240}])
+    )
+    tt = sn.state.timetable
+    for p in base.patterns_of_route("4"):
+        old = {tuple(row) for row in base.departures(p).tolist()}
+        key = base.patterns[p].key
+        new: set[tuple[int, ...]] = set()
+        for q in tt.patterns_of_route("4"):
+            if tt.patterns[q].key.split("~")[0] == key.split("~")[0]:
+                new |= {tuple(row) for row in tt.departures(q).tolist()}
+        assert old <= new
+    after = evaluator.evaluate(sn.state).tt
+    assert after is not None
+    assert (after <= evaluator.baseline_tt).all()
+    fewer = apply(
+        model, "weekday", parse_edits([{"type": "scale_frequency", "route_id": "4", "factor": 0.5}])
+    )
+    less = evaluator.evaluate(fewer.state).tt
+    assert less is not None and (less >= evaluator.baseline_tt).all()

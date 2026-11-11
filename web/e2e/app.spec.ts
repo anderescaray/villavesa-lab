@@ -112,11 +112,15 @@ test('theme toggle switches to dark and back', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('other views show designed empty states; shortcuts dialog opens with ?', async ({ page }) => {
+test('optimizer and compare views open (compare with a designed empty state); shortcuts dialog opens with ?', async ({
+  page,
+}) => {
   await open(page);
   await page.getByTestId('nav-optimizer').click();
   await expect(page.getByTestId('view-optimizer')).toContainText('presupuesto');
-  await page.getByRole('button', { name: 'Explorar la red actual' }).click();
+  await page.getByTestId('nav-compare').click();
+  await expect(page.getByTestId('compare-empty')).toBeVisible();
+  await page.getByTestId('nav-network').click();
   await expect(page.getByTestId('line-list')).toBeVisible();
   await page.keyboard.press('?');
   await expect(page.getByTestId('shortcuts-dialog')).toBeVisible();

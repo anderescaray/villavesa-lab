@@ -10,6 +10,7 @@ from __future__ import annotations
 import itertools
 import math
 from dataclasses import dataclass, replace
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -247,27 +248,55 @@ def _rebuild(tt: Timetable, blocks: list[PatternBlock], changed: set[int]) -> Ti
 # ======================================================================= frequency
 
 
-def _resample_starts(
-    t: npt.NDArray[np.int64], n_new: int, lo: float = -math.inf, hi: float = math.inf
-) -> npt.NDArray[np.int64]:
-    """``n_new`` start times spread like the ``len(t)`` sorted old ones (same span and
-    time-of-day density), kept inside the period ``[lo, hi)``."""
+def _spread_pick(tied: npt.NDArray[np.bool_], pos: npt.NDArray[Any], k: int) -> int:
+    """Index of one of the ``tied`` candidates. With a regular timetable every gap
+    ties, so successive picks follow the golden-ratio sequence over the span to
+    spread changes across the day instead of piling them at the start."""
+    idx = np.flatnonzero(tied)
+    if len(idx) == 1:
+        return int(idx[0])
+    lo, hi = float(pos[idx[0]]), float(pos[idx[-1]])
+    target = lo + ((0.5 + 0.6180339887 * k) % 1.0) * (hi - lo)
+    return int(idx[int(np.argmin(np.abs(pos[idx].astype(np.float64) - target)))])
+
+
+def _thin_or_fill(
+    t: npt.NDArray[np.int64], n_new: int, lo: float, hi: float
+) -> tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]:
+    """Change the number of trips of a pattern while keeping existing departures.
+
+    Returns ``(keep, added)``: indices (into sorted ``t``) of the old trips that
+    stay, and the start times of the new trips. More service keeps every
+    existing trip and inserts new ones in the middle of the widest gaps; less
+    service removes the trips whose removal leaves the narrowest gaps. A
+    scenario with more trips is therefore a superset of the baseline (nobody
+    can lose a connection) and one with fewer is a subset.
+    """
     n = len(t)
-    if n_new <= 0 or n == 0:
-        return np.zeros(0, dtype=np.int64)
-    if n == 1:
-        half = 900.0
-        knots_y = np.array([max(t[0] - half, lo), t[0], min(t[0] + half, hi - 1)])
-        knots_x = np.array([0.0, 0.5, 1.0])
-    else:
-        h0, h1 = float(t[1] - t[0]), float(t[-1] - t[-2])
-        knots_x = np.concatenate([[0.0], (np.arange(n) + 0.5) / n, [1.0]])
-        knots_y = np.concatenate(
-            [[max(t[0] - h0 / 2, lo)], t.astype(np.float64), [min(t[-1] + h1 / 2, hi - 1)]]
-        )
-    q = (np.arange(n_new) + 0.5) / n_new
-    out: npt.NDArray[np.int64] = np.round(np.interp(q, knots_x, knots_y)).astype(np.int64)
-    return out
+    if n_new >= n:
+        times = [float(v) for v in t]
+        added: list[float] = []
+        for _ in range(n_new - n):
+            if len(times) == 1:
+                step = 900.0
+                cand = times[0] + step if times[0] + step < hi else times[0] - step
+            else:
+                gaps = np.diff(times)
+                k = _spread_pick(gaps >= gaps.max() - 1.0, np.asarray(times[:-1]), len(added))
+                cand = times[k] + gaps[k] / 2.0
+            cand = float(min(max(cand, lo), hi - 1)) if math.isfinite(hi - lo) else cand
+            added.append(cand)
+            times = sorted([*times, cand])
+        return np.arange(n, dtype=np.int64), np.round(np.asarray(added)).astype(np.int64)
+    keep = list(range(n))
+    while len(keep) > max(n_new, 0):
+        if len(keep) <= 2:
+            keep.pop()  # drop the later one
+            continue
+        tt = t[np.asarray(keep)]
+        merged = tt[2:] - tt[:-2]  # gap left if the interior trip is removed
+        keep.pop(_spread_pick(merged <= merged.min() + 1.0, tt[1:-1], n - len(keep)) + 1)
+    return np.asarray(keep, dtype=np.int64), np.zeros(0, dtype=np.int64)
 
 
 def _retime_group(
@@ -279,48 +308,52 @@ def _retime_group(
     hi: float = math.inf,
     prev_day: bool = False,
 ) -> None:
-    """Replace the selected own-day trips of the patterns of one direction by
-    ``n_new`` trips, in place.
+    """Change the number of selected trips of one pattern to ``n_new``, in place.
 
-    The start times are resampled over the same span with the same time-of-day
-    density; each new trip copies the running times of the old trip closest in
-    departure time, and a later bus never overtakes an earlier one of the same
-    pattern (it is held). Called once per pattern so that every branch keeps
-    its own regular spacing.
+    Existing trips are kept untouched (see :func:`_thin_or_fill`); each added
+    trip takes running times interpolated between its neighbours.
     """
-    old_t = np.concatenate(
-        [blocks[i].dep[sel, 0].astype(np.int64) for i, sel in zip(group, sels, strict=True)]
-    )
-    old_g = np.concatenate([np.full(int(sel.sum()), j) for j, sel in enumerate(sels)])
-    old_row = np.concatenate([np.flatnonzero(sel) for sel in sels])
-    order = np.argsort(old_t, kind="stable")
-    old_t, old_g, old_row = old_t[order], old_g[order], old_row[order]
-    new_t = _resample_starts(old_t, n_new, lo, hi)
-    near = np.clip(np.searchsorted(old_t, new_t), 0, len(old_t) - 1)
-    left = np.clip(near - 1, 0, len(old_t) - 1)
-    near = np.where(np.abs(old_t[left] - new_t) <= np.abs(old_t[near] - new_t), left, near)
-    for j, (i, sel) in enumerate(zip(group, sels, strict=True)):
+    for i, sel in zip(group, sels, strict=True):
         if not sel.any():
             continue
         b = blocks[i]
         arr, dep = b.arr.astype(np.int64), b.dep.astype(np.int64)
-        mine = old_g[near] == j
-        t = new_t[mine]
-        proto = old_row[near[mine]]
-        new_arr = t[:, None] + (arr[proto] - dep[proto, :1])
-        new_dep = t[:, None] + (dep[proto] - dep[proto, :1])
-        if len(t) > 1:
-            new_arr = np.maximum.accumulate(new_arr, axis=0)
-            new_dep = np.maximum.accumulate(np.maximum(new_dep, new_arr), axis=0)
-        keep = ~sel
+        rows = np.flatnonzero(sel)
+        order = np.argsort(dep[rows, 0], kind="stable")
+        rows = rows[order]
+        old_t = dep[rows, 0]
+        keep_idx, new_t = _thin_or_fill(old_t, n_new, lo, hi)
+        # running times of a new trip: interpolated between the existing trips just
+        # before and after it, so it can neither overtake nor be overtaken and no
+        # existing trip has to be touched
+        right = np.clip(np.searchsorted(old_t, new_t, side="right"), 0, len(old_t) - 1)
+        left = np.clip(right - 1, 0, len(old_t) - 1)
+        span = (old_t[right] - old_t[left]).astype(np.float64)
+        frac = np.divide(new_t - old_t[left], span, out=np.zeros(len(new_t)), where=span > 0).clip(
+            0.0, 1.0
+        )[:, None]
+        off_arr = arr[rows] - dep[rows, :1]
+        off_dep = dep[rows] - dep[rows, :1]
+        new_arr = new_t[:, None] + np.round(
+            (1 - frac) * off_arr[left] + frac * off_arr[right]
+        ).astype(np.int64)
+        new_dep = new_t[:, None] + np.round(
+            (1 - frac) * off_dep[left] + frac * off_dep[right]
+        ).astype(np.int64)
+        new_dep = np.maximum(new_dep, new_arr)
+        kept_rows = rows[keep_idx]
+        sel_arr = np.vstack([arr[kept_rows], new_arr])
+        sel_dep = np.vstack([dep[kept_rows], new_dep])
+        sel_src = np.concatenate([b.trip_source[kept_rows], np.full(len(new_t), -1, np.int32)])
+        other = ~sel
         blocks[i] = PatternBlock(
             b.info,
             b.stops,
-            np.vstack([arr[keep], new_arr]).astype(np.int32),
-            np.vstack([dep[keep], new_dep]).astype(np.int32),
+            np.vstack([arr[other], sel_arr]).astype(np.int32),
+            np.vstack([dep[other], sel_dep]).astype(np.int32),
             b.offsets,
-            np.concatenate([b.trip_source[keep], np.full(len(t), -1, np.int32)]),
-            np.concatenate([b.trip_prev_day[keep], np.full(len(t), prev_day, np.bool_)]),
+            np.concatenate([b.trip_source[other], sel_src]),
+            np.concatenate([b.trip_prev_day[other], np.full(len(sel_arr), prev_day, np.bool_)]),
         )
 
 
@@ -335,9 +368,10 @@ def _period_chunks(period: str) -> list[tuple[int, int]]:
 def _frequency(tt: Timetable, e: SetHeadway | ScaleFrequency, log: ChangeLog) -> Timetable:
     """Change a route's frequency in a period.
 
-    Trips of every pattern of the route that start in the period are replaced
-    by ``round(n * factor)`` trips per direction, spread over the same span
-    (see :func:`_retime_group`). For ``set_headway`` the factor is
+    The number of trips of the route starting in the period becomes
+    ``round(n * factor)`` per direction. Existing departures are kept: more
+    service inserts trips in the widest gaps, less service removes the trips
+    that leave the narrowest gaps (see :func:`_thin_or_fill`). For ``set_headway`` the factor is
     ``current mean headway / target`` (:func:`vlab.gtfs.stats.mean_headways`:
     busiest direction; peak 07-09 h; off-peak measured 10-13 h and applied
     outside the peak).

@@ -71,7 +71,10 @@ try {
   const ctx = await newContext('light');
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('  pageerror:', e.message));
-  page.on('console', (m) => m.type() === 'error' && console.log('  console.error:', m.text().slice(0, 160)));
+  page.on(
+    'console',
+    (m) => m.type() === 'error' && console.log('  console.error:', m.text().slice(0, 160)),
+  );
   await page.goto(`${base}/#/optimizer?day=weekday&t=0800&play=0`);
   await page.getByTestId('opt-question').waitFor({ timeout: 90_000 });
   await settle(page, 1500);
@@ -85,11 +88,15 @@ try {
   }, timeLimit);
   await page.getByTestId('opt-run').click();
   await page.getByTestId('opt-running').waitFor();
-  await page.waitForFunction(
-    () => document.querySelector('[data-testid="opt-history"]') || document.querySelectorAll('[data-testid="opt-log"] li').length > 1,
-    null,
-    { timeout: 60_000 },
-  ).catch(() => {});
+  await page
+    .waitForFunction(
+      () =>
+        document.querySelector('[data-testid="opt-history"]') ||
+        document.querySelectorAll('[data-testid="opt-log"] li').length > 1,
+      null,
+      { timeout: 60_000 },
+    )
+    .catch(() => {});
   await settle(page, 4000);
   await save(page, 'optimizer-running');
 
@@ -98,7 +105,9 @@ try {
   await save(page, 'optimizer-result');
   // explanation scrolled into view
   await page.getByTestId('opt-explanation').scrollIntoViewIfNeeded();
-  await page.evaluate(() => document.querySelector('[data-testid="opt-explanation"]').scrollIntoView({ block: 'start' }));
+  await page.evaluate(() =>
+    document.querySelector('[data-testid="opt-explanation"]').scrollIntoView({ block: 'start' }),
+  );
   const firstLine = page.getByTestId('opt-lines').locator('button').first();
   await firstLine.hover();
   await settle(page, 700);
@@ -109,7 +118,9 @@ try {
     await page.getByTestId('opt-trade-run').click();
     await page.getByTestId('tradeoff-chart').waitFor({ timeout: 240_000 });
     await page.getByTestId('opt-tradeoff').scrollIntoViewIfNeeded();
-    await page.evaluate(() => document.querySelector('[data-testid="opt-tradeoff"]').scrollIntoView({ block: 'start' }));
+    await page.evaluate(() =>
+      document.querySelector('[data-testid="opt-tradeoff"]').scrollIntoView({ block: 'start' }),
+    );
     await page.getByTestId('tradeoff-point').nth(4).hover();
     await settle(page, 600);
     await save(page, 'optimizer-tradeoff');

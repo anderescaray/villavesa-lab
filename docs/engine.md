@@ -66,7 +66,7 @@ tables are rebuilt (~0.2 s).
 
 | Edit | Semantics |
 | --- | --- |
-| `set_headway`, `scale_frequency` | Trips starting in the period are replaced, pattern by pattern, by a new number of trips spread over the same span with the same time-of-day density; each new trip copies the running times of the nearest old trip. Branches and short-turn variants keep their share (largest remainder, at least one trip each). `set_headway` targets the **mean headway of the busiest direction** (period length / trips; peak 07-09 h, off-peak measured 10-13 h and applied outside the peak). |
+| `set_headway`, `scale_frequency` | The number of trips starting in the period changes, pattern by pattern, **keeping existing departures**: more service inserts trips in the middle of the widest gaps (with running times interpolated between its neighbours), less service removes the trips that leave the narrowest gaps. More service is therefore a superset of today's timetable — nobody loses a connection — and less service a subset. Branches and short-turn variants keep their share (largest remainder, at least one trip each). `set_headway` targets the **mean headway of the busiest direction** (period length / trips; peak 07-09 h, off-peak measured 10-13 h and applied outside the peak). |
 | `speed_up` | Running time between the given consecutive stops divided by the factor (1.0-2.0); dwell unchanged; downstream times shift earlier. |
 | `remove_stop` | The stop is dropped from every pattern (or one route); each removal saves 20 s downstream (deceleration + dwell + acceleration). |
 | `move_stop` | New coordinates; walking tables rebuilt; bus paths are not rerouted (warning beyond 300 m). |
@@ -74,9 +74,7 @@ tables are rebuilt (~0.2 s).
 | `remove_route` | All its trips disappear. |
 | `add_route` | Path snapped to the bus-drivable street graph (respecting one-ways) through the waypoints or stops; stops projected on it; run times at the network's mean commercial speed (12.3 km/h, which already includes dwell) unless given; regular headway over a default 06:30-22:30 span; optional reverse direction. A leg that cannot follow streets falls back to a straight segment with a warning. |
 
-Caveats: retiming changes exact departure times, so a few connections can get
-worse even when frequency rises (the model reports them as people losing
-access); cost for the year applies the scenario to every day type and skips
+Caveats: cost for the year applies the scenario to every day type and skips
 edits that do not apply on a day (e.g. a line that does not run on Sundays).
 
 ## Cost model (`vlab.cost`)
