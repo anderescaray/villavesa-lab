@@ -97,7 +97,7 @@ async function shot(
       timeout: 60000,
     });
   }
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(Number(process.env.SETTLE_MS ?? 1200));
   if (after) await after(page);
   await page
     .waitForFunction(
@@ -181,7 +181,15 @@ await shot('14-about-data', {
     await page.click('[data-testid="open-about"]');
   },
 });
-await shot('15-tablet', { hash: `#/network?${q(iso)}`, viewport: TABLET });
+await shot('15-tablet', {
+  hash: `#/network?${q(iso)}`,
+  viewport: TABLET,
+  // software GL can leave part of the tall canvas unpainted: force a repaint before the capture
+  after: async (page) => {
+    await page.evaluate(() => window.__vlabMap?.triggerRepaint());
+    await page.waitForTimeout(2500);
+  },
+});
 await shot('16-night', { hash: `#/network?day=saturday&t=2350&play=0`, theme: 'dark' });
 await shot('17-components-light', { hash: '#/dev/components' });
 await shot('18-components-dark', { hash: '#/dev/components', theme: 'dark' });

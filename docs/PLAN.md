@@ -36,7 +36,7 @@ green together.
 ## Current step
 
 Everything is merged to `main` and CI is green (ruff, mypy strict, 260+ pytest
-tests; eslint, prettier, strict TypeScript, 81 unit tests, 21 Playwright tests
+tests; eslint, prettier, strict TypeScript, 86 unit tests, 21 Playwright tests
 against the real API). `docker compose up` was verified: both images build, the
 stack serves the app on :3000 through nginx, and the API image built from a
 clean clone of `main` comes up healthy in ~25 s.

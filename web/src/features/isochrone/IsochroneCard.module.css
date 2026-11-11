@@ -150,14 +150,12 @@
   }
 }
 
-/* tablet and below: dock as a bottom sheet above the time control so the map stays the hero */
+/* tablet and below: keep the floating card, but narrower and with a guaranteed gutter.
+   (A bottom-sheet variant left part of the WebGL map unpainted in headless Chromium and
+   could not be verified on a real GPU, so the known-good layout is kept.) */
 @media (max-width: 900px) {
   .card {
-    top: auto;
-    bottom: 160px;
-    left: calc(var(--map-left, 0px) + var(--space-4));
-    right: var(--space-4);
-    width: auto;
-    max-height: 42vh;
+    width: min(300px, calc(100vw - var(--map-left, 0px) - 2 * var(--space-4)));
+    max-height: calc(100% - 64px - 190px);
   }
 }
