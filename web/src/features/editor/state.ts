@@ -60,6 +60,15 @@ export interface Corridor {
   allLines: boolean;
 }
 
+export interface PendingStop {
+  lon: number;
+  lat: number;
+  routeId: string;
+  direction: number;
+  afterStopId: string;
+  name: string;
+}
+
 export interface StopDrag {
   stopId: string;
   from: LonLat;
@@ -77,6 +86,8 @@ export interface EditorState {
   /** add-stop sub-mode of the stop tool: the next map click inserts a stop on `routeId` */
   addingStop: boolean;
   corridor: Corridor;
+  /** add-stop: the insertion point chosen on the map, waiting for a name */
+  pendingStop: PendingStop | null;
   draft: Draft | null;
   drag: StopDrag | null;
   /** index of the change-list row being edited inline */
@@ -106,6 +117,7 @@ export const useEditor = create<EditorState & EditorActions>()((set, get) => ({
   stopId: null,
   addingStop: false,
   corridor: NO_CORRIDOR,
+  pendingStop: null,
   draft: null,
   drag: null,
   editing: null,
@@ -117,6 +129,7 @@ export const useEditor = create<EditorState & EditorActions>()((set, get) => ({
     set((s) => ({
       tool,
       addingStop: false,
+      pendingStop: null,
       editing: null,
       stopId: tool === 'stop' ? s.stopId : null,
       corridor: tool === 'priority' ? s.corridor : { ...s.corridor, start: null, end: null },
@@ -135,6 +148,7 @@ export const useEditor = create<EditorState & EditorActions>()((set, get) => ({
   escape: () => {
     const s = get();
     if (s.drag) set({ drag: null });
+    else if (s.pendingStop) set({ pendingStop: null });
     else if (s.addingStop) set({ addingStop: false });
     else if (s.editing !== null) set({ editing: null });
     else if (s.draft && s.draft.waypoints.length) set({ draft: null, tool: 'select' });

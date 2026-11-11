@@ -32,13 +32,18 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
+      # the e2e suite runs against the real FastAPI engine (started by playwright.config.ts)
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+        working-directory: .
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - run: npm run fixtures
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

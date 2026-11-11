@@ -140,6 +140,7 @@ export function startUrlSync(): () => void {
     if (!timer) timer = window.setTimeout(write, delay);
   };
   const unsubApp = useApp.subscribe(() => schedule(150));
+  schedule(300); // normalise the initial URL (e.g. add the view's defaults)
   const unsubClock = clock.subscribe((s, prev) => {
     if (s.playing !== prev.playing) schedule(50);
     else if (!s.playing && s.time !== prev.time) schedule(300);

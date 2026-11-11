@@ -41,7 +41,9 @@ function useInitialClock(initial: UrlState) {
     clock.setState({
       domain: [model.from, model.to],
       time: target,
-      playing: initial.play ?? !prefersReducedMotion(),
+      // analysis views read the clock as a time-of-day setting: they start paused
+      playing:
+        useApp.getState().view !== 'accessibility' && (initial.play ?? !prefersReducedMotion()),
     });
   }, [model, initial]);
 }

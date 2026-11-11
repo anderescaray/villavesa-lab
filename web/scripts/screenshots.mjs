@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /**
- * Design-review screenshots of every main view → docs/screenshots/*.png
+ * Design-review screenshots of every main view → docs/screenshots/*.png, against the REAL engine
+ * and the real basemap tiles.
  *
- * Usage: npm run screenshots            (starts a mock-API dev server on :3200)
- *        BASE_URL=http://localhost:3000 npm run screenshots   (reuse a running server)
- *        BASEMAP=none npm run screenshots                     (offline, blank basemap)
+ * Usage: npm run screenshots                         (uses the API at :8000, or starts one on :8200)
+ *        API_URL=http://localhost:8100 npm run screenshots
+ *        BASE_URL=http://localhost:3000 npm run screenshots   (reuse a running web server)
+ *        ONLY=08 npm run screenshots                         (only shots whose name contains "08")
+ *        BASEMAP=none npm run screenshots                    (offline, blank basemap)
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync } from 'node:fs';
@@ -16,26 +19,45 @@ const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, '../../docs/screenshots');
 mkdirSync(out, { recursive: true });
 
+const children = [];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function healthy(url) {
+  try {
+    const r = await fetch(url);
+    return r.ok && (await r.json()).status === 'ok';
+  } catch {
+    return false;
+  }
+}
+
+let api = process.env.API_URL ?? 'http://localhost:8000';
+if (!process.env.BASE_URL && !(await healthy(`${api}/api/health`))) {
+  api = 'http://localhost:8200';
+  console.log('starting the engine on :8200 (first load can take a minute)…');
+  children.push(
+    spawn('uv', ['run', 'uvicorn', 'vlab_api.main:app', '--port', '8200'], {
+      cwd: resolve(here, '../..'),
+      env: { ...process.env, VLAB_SYNC_LOAD: '1' },
+      stdio: 'ignore',
+    }),
+  );
+  for (let i = 0; i < 240 && !(await healthy(`${api}/api/health`)); i++) await sleep(1000);
+}
+
 const PORT = 3200;
-let server = null;
 let base = process.env.BASE_URL;
 if (!base) {
   base = `http://localhost:${PORT}`;
-  server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
-    cwd: resolve(here, '..'),
-    env: { ...process.env, VITE_MOCK_API: '1', VITE_BASEMAP: process.env.BASEMAP ?? '' },
-    stdio: 'ignore',
-  });
-  for (let i = 0; i < 60; i++) {
-    try {
-      const r = await fetch(`${base}/api/health`);
-      if (r.ok) break;
-    } catch {
-      /* not up yet */
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
+  children.push(
+    spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
+      cwd: resolve(here, '..'),
+      env: { ...process.env, VITE_API_PROXY: api, VITE_BASEMAP: process.env.BASEMAP ?? '' },
+      stdio: 'ignore',
+    }),
+  );
+  for (let i = 0; i < 60 && !(await healthy(`${base}/api/health`)); i++) await sleep(500);
 }
+const only = process.env.ONLY;
 
 const launchOptions = process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {};
 const browser = await chromium.launch(launchOptions);
@@ -47,6 +69,7 @@ async function shot(
   name,
   { hash, theme = 'light', lang = 'es', viewport = DESKTOP, before, after },
 ) {
+  if (only && !name.includes(only)) return;
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2 });
   await ctx.addInitScript(
     ([t, l]) => {
@@ -68,6 +91,9 @@ async function shot(
       },
     )
     .catch(() => undefined);
+  if (hash.startsWith('#/accessibility')) {
+    await page.waitForSelector('[data-testid="acc-headline"]', { timeout: 60000 });
+  }
   await page.waitForTimeout(1200);
   if (after) await after(page);
   await page
@@ -107,7 +133,34 @@ await shot('07-stop-popover', {
     await page.evaluate(() => window.__vlabMap?.jumpTo({ center: [-1.6392, 42.8129], zoom: 15.2 }));
   },
 });
-await shot('08-accessibility-empty', { hash: `#/accessibility?${q()}` });
+const acc = (extra = '') => `#/accessibility?day=weekday&t=0800&play=0${extra ? `&${extra}` : ''}`;
+await shot('08-accessibility-light', { hash: acc('cat=hospital&metric=time&thr=30') });
+await shot('08-accessibility-dark', {
+  hash: acc('cat=hospital&metric=time&thr=30'),
+  theme: 'dark',
+});
+await shot('08-accessibility-underserved', { hash: acc('cat=hospital&metric=gap&thr=30') });
+await shot('08-accessibility-income', { hash: acc('cat=university&metric=income&thr=30') });
+await shot('08-accessibility-hover', {
+  hash: acc('cat=hospital&metric=time&thr=30'),
+  after: async (page) => {
+    const p = await page.evaluate(() => {
+      const map = window.__vlabMap;
+      return map ? map.project([-1.6205, 42.8215]) : null;
+    });
+    if (p) {
+      await page.mouse.move(p.x - 4, p.y - 4);
+      await page.mouse.move(p.x, p.y, { steps: 3 });
+    }
+  },
+});
+await shot('08-accessibility-tablet', {
+  hash: acc('cat=health_centre&metric=time&thr=15'),
+  viewport: TABLET,
+  after: async (page) => {
+    await page.keyboard.press('[');
+  },
+});
 await shot('09-scenario-empty', { hash: `#/scenario?${q()}` });
 await shot('10-optimizer-empty', { hash: `#/optimizer?${q()}` });
 await shot('11-compare-empty', { hash: `#/compare?${q()}` });
@@ -131,7 +184,7 @@ await shot('17-components-light', { hash: '#/dev/components' });
 await shot('18-components-dark', { hash: '#/dev/components', theme: 'dark' });
 
 await browser.close();
-server?.kill();
+for (const c of children) c.kill();
 
 // palette-quantise to keep docs/ light (optional: needs python3 + Pillow)
 const pngs = readdirSync(out)

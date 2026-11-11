@@ -16,7 +16,10 @@ RUN uv sync --frozen --no-dev
 
 COPY data/raw/gtfs_tuc_pamplona.zip ./data/raw/gtfs_tuc_pamplona.zip
 COPY data/processed ./data/processed
-RUN mkdir -p /var/cache/numba /var/cache/vlab /app/data/cache
+# Compile the numba kernels and build the walking tables at image build time, so the
+# container is ready a few seconds after it starts instead of after a minute.
+RUN mkdir -p /var/cache/numba /var/cache/vlab /app/data/cache \
+ && python -c "from vlab.model import Model; from vlab_api.service import Service; Service(Model.load()).warm_up()"
 
 EXPOSE 8000
 HEALTHCHECK --interval=5s --timeout=3s --start-period=120s --retries=40 \
