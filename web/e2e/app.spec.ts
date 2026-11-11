@@ -117,7 +117,7 @@ test('optimizer and compare views open (compare with a designed empty state); sh
 }) => {
   await open(page);
   await page.getByTestId('nav-optimizer').click();
-  await expect(page.getByTestId('view-optimizer')).toContainText('presupuesto');
+  await expect(page.getByTestId('view-optimizer')).toContainText('Presupuesto');
   await page.getByTestId('nav-compare').click();
   await expect(page.getByTestId('compare-empty')).toBeVisible();
   await page.getByTestId('nav-network').click();
