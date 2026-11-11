@@ -1,0 +1,70 @@
+.root {
+  display: flex;
+  flex-direction: column;
+}
+.head {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+}
+.title {
+  font-size: var(--text-14);
+  font-weight: var(--weight-semibold);
+}
+.dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--divider);
+  font-size: var(--text-12);
+}
+.dl dt {
+  color: var(--text-secondary);
+}
+.dl dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.section {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+.sectionTitle {
+  margin-bottom: var(--space-2);
+  color: var(--text-tertiary);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.notes li {
+  position: relative;
+  padding-left: 14px;
+  color: var(--text);
+  font-size: var(--text-12);
+  line-height: 1.5;
+}
+.notes li::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+.foot {
+  padding: 0 var(--space-4) var(--space-4);
+  color: var(--text-tertiary);
+  font-size: var(--text-11);
+}

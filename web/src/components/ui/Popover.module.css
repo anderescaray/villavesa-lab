@@ -1,0 +1,17 @@
+.content {
+  z-index: var(--z-popover);
+  width: 320px;
+  max-height: min(560px, calc(100vh - 96px));
+  overflow: auto;
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-overlay);
+  animation: pop var(--dur) var(--ease-out);
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}

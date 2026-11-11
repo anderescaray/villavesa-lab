@@ -1,0 +1,9 @@
+.map {
+  position: absolute;
+  inset: 0;
+  background: var(--map-bg);
+}
+.map :global(.maplibregl-ctrl-bottom-right) {
+  right: 4px;
+  bottom: 2px;
+}

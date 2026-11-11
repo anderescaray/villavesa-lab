@@ -236,3 +236,36 @@ result: `{ "points": [ { "budget": 120, "objective": .., "mean_travel_time": ..,
 ### `POST /api/report`  body `{ "scenario": Edit[], "window": Window, "lang": "es" | "en", "title": "..." }` → `text/html`
 
 Self-contained HTML report (print-friendly; the browser's print dialog produces the PDF).
+
+---
+
+## Additions made while implementing (all additive)
+
+- `GET /api/health` returns `{"status": "ok" | "loading" | "error", "detail"}`; every other
+  endpoint answers `503` while the engine is loading.
+- `/api/meta`: `data_notes` is a list of `{ "key", "text" }` (stable keys for translation);
+  also `essential_categories` and `feed.n_stops_served_weekday`.
+- `/api/network`: `day`, `removed_routes`, `warnings`; `stats.headway` (mean all-day headway).
+  `headway_peak` / `headway_offpeak` are **mean** headways of the busiest direction
+  (07-09 h and 10-13 h), `null` with fewer than two trips. `boardings_weight` is residents
+  within a 5-minute walk shared between the stops in reach, not observed boardings.
+  Only routes with trips on the requested day are listed.
+- `/api/vehicles` (also `GET ?day=`): trips carry `headsign` and `direction`.
+- `/api/isochrone`: `mode` echoed; `reached_stops` covers the largest cutoff.
+- `/api/accessibility`: zones add `access_index` and `mean_time`; summary adds `objective`
+  and `jobs_30_mean`.
+- `/api/scenario/evaluate`: Kpis add `cost_eur_year`, `objective`,
+  `underserved_population`; delta adds `objective`, `objective_pct`,
+  `underserved_population`; zones add `delta_access_index`; routes add `trips`.
+- `/api/scenario/snap`: `nearby_stops` carry `name`; `warnings`.
+- Edits: `remove_stop` accepts an optional `route_id`; `scale_frequency` accepts `period`;
+  `add_route` accepts `first_dep` / `last_dep`.
+- `/api/optimize`: body also takes `threshold`; the result adds `budget {kind, value, used}`,
+  `objective.change_pct` and `elapsed_s`. Jobs run one at a time.
+- `/api/optimize/tradeoff`: points add `used` and `objective_pct`; `baseline` adds
+  `mean_travel_time` and `share_within`.
+- `/api/report`: body also takes `threshold`; `scenario` may be empty.
+- `/api/vehicles` includes the previous service day's trips that run past midnight, shifted
+  by -24 h, so their times can be negative; this keeps the animation continuous at night.
+- GeoJSON features of `/api/zones` and `/api/sections` carry a top-level `id`; for zones it is
+  the zone index used by every zone-aligned array. `/api/pois` ids are integers.

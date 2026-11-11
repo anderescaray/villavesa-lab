@@ -56,3 +56,101 @@ Each entry: context → options → choice → why.
 - **Why**: single-departure times are noisy for low-frequency lines (phase
   artefacts) and would make headway changes look erratic; sampling a window is
   what R5 and most accessibility tools do, which also makes validation fair.
+
+## D-007 Checkpoint commits of in-progress work
+
+- **Context**: the build container is ephemeral and several workstreams run in
+  parallel in one working tree on one branch.
+- **Choice**: in-progress work is pushed to the session branch as `wip:` checkpoint
+  commits so nothing is lost; a milestone PR is opened only when its part is
+  complete and green, and is squash-merged, so `main` history stays one commit
+  per milestone. The branch is never force-pushed: after a squash merge, `main`
+  is merged back into the branch instead.
+
+## D-008 Data sources actually used (see `docs/data.md` for detail)
+
+- **Floor area from the cadastre**: OSM has `building:levels` for only ~12% of
+  footprint area, so floor area comes from the official Navarra cadastre building
+  volumes (IDENA, CC BY 4.0). OSM tags/land use still decide residential vs not.
+- **Population and income from the same INE table family** (household income
+  atlas, 2024 data on 2025 section boundaries): one consistent set of section
+  codes; the 2024 boundaries mismatched two sections.
+- **POIs prefer official registers** (Navarra health service, education
+  department, IDENA industrial estates) over OSM, which is used for
+  universities, supermarkets and the city centre. One manual rule: Clínica
+  Arcángel San Miguel is excluded from `hospital` (psychiatric clinic, not a
+  general hospital).
+- **Extra bundle files**: `zone_sections.parquet` (cells spanning several
+  sections) and `drive_graph.npz` (bus-drivable streets, because the pedestrian
+  graph is the wrong network to snap new bus lines to).
+
+## D-009 Cost model parameters
+
+- **Choice**: operating cost = 43.15 EUR per bus-hour + 1.25 EUR per km (the
+  two-part tariff the operator was actually paid on, 2023 prices, MCP X Plan
+  2023), capital = 25,300 EUR per bus-year (contract amortisation + financing /
+  159 buses). All three are editable parameters, surfaced with their source.
+- **Why**: these are sourced figures (`docs/reference_facts.md`), not guesses.
+  Caveat: they belong to the pre-2024 concession; the new contract's unit prices
+  are not public.
+
+## D-010 Router semantics (detail in `docs/router.md`)
+
+- **Two labels per round and stop**: T (arrival by a ride — the only labels that
+  may start a footpath) and A (best arrival — the only labels used for boarding).
+  Keeps single-hop footpaths exact without a transitively closed transfer table.
+- **Board slack**: 60 s on every boarding, including the first.
+- **Matrix averaging is a censored mean**: an unreachable departure sample counts
+  as the cap (2 h) and an OD pair is reachable only if at least half of its
+  samples are. "Mean of reachable samples" was rejected because it is not
+  monotone: cutting service could *lower* the reported time.
+- **Overnight trips** of the previous service day that run past 24:00 are added
+  to each date's timetable shifted by -24 h.
+- **FIFO**: overtaking trips are split into sub-patterns, as RAPTOR requires;
+  `PatternInfo.key` is the stable handle, not the pattern index.
+- **No range-RAPTOR**: plain RAPTOR x K departures computes the full 1,794-zone
+  matrix in ~0.4 s, well inside the "recompute in seconds" budget.
+
+## D-011 Headway is a mean, not a median
+
+- **Context**: lines with branches and short-turn variants (L4 has five) have
+  bimodal gaps; the median gap (240 s on L4) says little about service level
+  and is not something an edit can target.
+- **Choice**: headway = period length / trips started in the period, busiest
+  direction, all patterns pooled (`vlab.gtfs.stats.mean_headways`). It is what
+  the UI shows and what `set_headway` targets.
+
+## D-012 One engine lock
+
+- **Context**: FastAPI runs sync endpoints in a thread pool and numba's default
+  threading layer cannot be entered from several Python threads at once (the
+  test suite hung when two threads did).
+- **Choice**: every compute entry point runs under one process-wide lock; the
+  kernels already use all cores, so serialising requests costs nothing.
+  Optimizer jobs take the lock per evaluation, so the API stays responsive
+  while a job runs.
+
+## D-013 Optimizer design
+
+- **Options**: (a) pure metaheuristic over everything; (b) exact MILP on a
+  linearised model only; (c) MILP for the part that is nearly separable
+  (frequencies) + real-router verification and local search + ALNS for line
+  design, which is combinatorial and not separable.
+- **Choice**: (c). The waiting-time law gives a principled, cheap benefit model
+  (two router evaluations per line), CP-SAT solves the knapsack exactly, and the
+  router remains the judge: every accepted move is measured, and the final
+  proposal is re-evaluated on all zones. Details in `docs/engine.md`.
+
+## D-014 Reference router for validation
+
+- **Choice**: OpenTripPlanner 2.8.1 (the newest release that runs on the
+  available Java 21) rather than r5py. Same GTFS and OSM extract, independent
+  street graph and routing code. Results and reproduction in
+  `docs/validation.md`.
+
+## D-015 End-to-end tests run against the real API
+
+- **Context**: the web app was first built against a mock while the backend was
+  written. Keeping a mock means keeping two implementations of the contract.
+- **Choice**: the mock is deleted; Playwright starts the real API and the web
+  dev server, locally and in CI.
