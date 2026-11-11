@@ -92,7 +92,10 @@ async function shot(
     )
     .catch(() => undefined);
   if (hash.startsWith('#/accessibility')) {
-    await page.waitForSelector('[data-testid="acc-headline"]', { timeout: 60000 });
+    await page.waitForSelector('[data-testid="acc-headline"]', {
+      state: 'attached',
+      timeout: 60000,
+    });
   }
   await page.waitForTimeout(1200);
   if (after) await after(page);
