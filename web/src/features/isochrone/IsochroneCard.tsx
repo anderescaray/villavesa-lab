@@ -30,7 +30,7 @@ export function IsochroneCard() {
   const t = useT();
   const lang = useApp((st) => st.lang);
   const theme = useApp((st) => st.theme);
-  const origin = useApp((st) => (st.view === 'accessibility' ? null : st.isoOrigin));
+  const origin = useApp((st) => (st.view === 'accessibility' || st.view === 'scenario' ? null : st.isoOrigin));
   const day = useApp((st) => st.day);
   const start = useApp((st) => st.isoStart);
   const mode = useApp((st) => st.isoMode);

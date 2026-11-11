@@ -3,6 +3,7 @@ import { useApp } from '@/app/store';
 import { IconButton } from '@/components/ui';
 import { AccessibilityPanel } from '@/features/accessibility/AccessibilityPanel';
 import { NetworkPanel } from '@/features/network/NetworkPanel';
+import { EditorPanel } from '@/features/editor/EditorPanel';
 import { PlannedView } from '@/features/views/PlannedView';
 import { useT } from '@/i18n';
 import { Wordmark } from './Brand';
@@ -32,6 +33,8 @@ export function SidePanel() {
           <NetworkPanel />
         ) : view === 'accessibility' ? (
           <AccessibilityPanel />
+        ) : view === 'scenario' ? (
+          <EditorPanel />
         ) : (
           <div className={s.panelScroll}>
             <PlannedView view={view} />

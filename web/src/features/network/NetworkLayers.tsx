@@ -194,7 +194,7 @@ export function NetworkLayers() {
   const direction = useApp((s) => s.selectedDirection);
   const selectedStop = useApp((s) => s.selectedStopId);
   // analysis views keep the network as quiet context: thin, low-contrast, no stops
-  const quiet = useApp((s) => s.view === 'accessibility');
+  const quiet = useApp((s) => s.view === 'accessibility' || s.view === 'scenario');
   const minute = useClockMinute();
 
   // 1) sources + layers (re-added after every style load)

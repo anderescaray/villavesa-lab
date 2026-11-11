@@ -2,6 +2,7 @@ import { Info, Link2, Monitor, Moon, Sun } from 'lucide-react';
 import { useApp, type ThemePref } from '@/app/store';
 import { IconButton, SegmentedControl, Surface, toast } from '@/components/ui';
 import { LANGS, useT, type Lang } from '@/i18n';
+import { ScenarioChip } from '@/features/scenario/ScenarioChip';
 import { AboutPopover } from './AboutPopover';
 import s from './Shell.module.css';
 
@@ -15,6 +16,7 @@ export function TopControls() {
   const set = useApp((st) => st.set);
   return (
     <div className={s.topRight}>
+      <ScenarioChip />
       <Surface className={s.cluster}>
         <SegmentedControl<Lang>
           size="sm"

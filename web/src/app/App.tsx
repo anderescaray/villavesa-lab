@@ -3,6 +3,10 @@ import { useApp } from '@/app/store';
 import { ToastRegion, TooltipProvider } from '@/components/ui';
 import { AccessibilityLayers } from '@/features/accessibility/AccessibilityLayers';
 import { AccessibilityLegend } from '@/features/accessibility/AccessibilityLegend';
+import { EditorInteractions } from '@/features/editor/EditorInteractions';
+import { EditorLayers } from '@/features/editor/EditorLayers';
+import { ImpactCard } from '@/features/editor/ImpactCard';
+import { ToolPalette } from '@/features/editor/ToolPalette';
 import { IsochroneCard } from '@/features/isochrone/IsochroneCard';
 import { IsochroneLayers } from '@/features/isochrone/IsochroneLayers';
 import { BusesLayer } from '@/features/network/BusesLayer';
@@ -81,6 +85,10 @@ export function App({ initial }: { initial: UrlState }) {
           <IsochroneLayers />
           <BusesLayer />
           <MapInteractions />
+          <EditorLayers />
+          <EditorInteractions />
+          <ToolPalette />
+          <ImpactCard />
           <StopPopover />
           <BusTooltip />
           <IsochroneHint />
